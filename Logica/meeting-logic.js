@@ -135,8 +135,11 @@ function restoreMeetingState(d) {
         };
     }
     if (d.role === 'passenger') {
-        if (!d.driverUid || d.embarkStatus === 'waiting') {
+        if (!d.driverUid || d.embarkStatus === 'waiting' || d.embarkStatus === 'confirmed') {
             showMeetingView('meeting-passenger-waiting');
+            const isConfirmed = d.embarkStatus === 'confirmed';
+            document.getElementById('btn-passenger-confirm-location')?.classList.toggle('hidden', isConfirmed);
+            document.getElementById('passenger-embark-confirmed-msg')?.classList.toggle('hidden', !isConfirmed);
         } else {
             showMeetingView('meeting-passenger-selected');
             listenForDriverInfo(d.driverUid);
@@ -241,6 +244,9 @@ async function confirmMeetingLocation(locId, loc) {
 
         if (currentMeetingRole === 'passenger') {
             showMeetingView('meeting-passenger-waiting');
+            const isConfirmed = pd.embarkStatus === 'confirmed';
+            document.getElementById('btn-passenger-confirm-location')?.classList.toggle('hidden', isConfirmed);
+            document.getElementById('passenger-embark-confirmed-msg')?.classList.toggle('hidden', !isConfirmed);
             // Alerta ao carona para não mudar de lugar
             _showPassengerLocationAlert(embarkLat, embarkLng);
         } else if (currentMeetingRole === 'driver') {
@@ -327,7 +333,8 @@ async function loadAvailablePassengers() {
     availablePaxListener = supabase.database().ref('meeting/participants').on('value', snap => {
         const all = snap.val() || {};
         const waiting = Object.values(all).filter(p =>
-            p.role === 'passenger' && p.embarkStatus === 'waiting' &&
+            p.role === 'passenger' && 
+            (p.embarkStatus === 'waiting' || p.embarkStatus === 'confirmed') &&
             p.uid !== currentVendorUid && p.locationId === myLocId
         );
         if (!list) return;
@@ -392,7 +399,8 @@ async function autoSuggestPassengers() {
         ]);
         const locId = mSnap.val()?.locationId, max = VEHICLE_CAPACITY[driverVehicleType] || 4;
         let w = Object.values(aSnap.val() || {}).filter(p =>
-            p.role === 'passenger' && p.embarkStatus === 'waiting' &&
+            p.role === 'passenger' && 
+            (p.embarkStatus === 'waiting' || p.embarkStatus === 'confirmed') &&
             p.locationId === locId && p.uid !== currentVendorUid &&
             (p.embarkLat || p.lat)
         );
