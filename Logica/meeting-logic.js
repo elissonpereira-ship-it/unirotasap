@@ -332,10 +332,15 @@ async function loadAvailablePassengers() {
 
     availablePaxListener = supabase.database().ref('meeting/participants').on('value', snap => {
         const all = snap.val() || {};
+        if (!myLocId) {
+            list.innerHTML = '<div class="empty-state"><p>Selecione um local de reunião primeiro.</p></div>';
+            return;
+        }
+
         const waiting = Object.values(all).filter(p =>
             p.role === 'passenger' && 
             (p.embarkStatus === 'waiting' || p.embarkStatus === 'confirmed') &&
-            p.uid !== currentVendorUid && p.locationId === myLocId
+            p.uid !== currentVendorUid && String(p.locationId) === String(myLocId)
         );
         if (!list) return;
         list.innerHTML = '';
