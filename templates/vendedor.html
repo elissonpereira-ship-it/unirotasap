@@ -642,34 +642,6 @@
         </button>
     </nav>
 
-    <nav id="bottom-nav" class="bottom-nav">
-        <button class="bn-item active" id="menu-dashboard" onclick="showScreen('dashboard')">
-            <i data-lucide="home"></i>
-            <span>InÃ­cio</span>
-        </button>
-        <button class="bn-item" id="menu-map" onclick="showScreen('map')">
-            <i data-lucide="map"></i>
-            <span>Mapa</span>
-        </button>
-        <button class="bn-item" id="menu-chat" onclick="showScreen('chat')">
-            <i data-lucide="message-square"></i>
-            <span id="badge-support" class="notif-badge"></span>
-            <span>Suporte</span>
-        </button>
-        <button class="bn-item" id="menu-reuniao" onclick="showScreen('reuniao')">
-            <i data-lucide="users"></i>
-            <span>ReuniÃ£o</span>
-        </button>
-        <button class="bn-item" id="menu-historico" onclick="showScreen('historico')">
-            <i data-lucide="history"></i>
-            <span>HistÃ³rico</span>
-        </button>
-        <button class="bn-item" id="bn-sidebar" onclick="openSidebar()">
-            <i data-lucide="menu"></i>
-            <span>Menu</span>
-        </button>
-    </nav>
-
     <div id="toast"></div>
 
     <!-- MODAL ESQUECI MINHA SENHA -->
@@ -715,6 +687,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
     <!-- SCRIPTS MODULARES -->
+    <script src="../scripts/supabase-shim-v2.js"></script>
     <script src="../scripts/vendedor.js"></script>
     <script src="../Logica/meeting-logic.js"></script>
 
