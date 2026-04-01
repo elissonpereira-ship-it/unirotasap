@@ -123,21 +123,37 @@ function isVendorOnline(uid) {
 // --- HELPERS ---
 function closeAllModals() {
     const overlay = document.getElementById('modal-overlay');
-    if (overlay) overlay.classList.add('hidden');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('active');
+    }
     document.querySelectorAll('.modal-content').forEach(m => m.classList.add('hidden'));
 }
 
 function openModal(id) {
-    closeAllModals(); // Garantir exclusividade
+    closeAllModals(); 
     const m = document.getElementById(id);
-    if (!m) return;
     const overlay = document.getElementById('modal-overlay');
-    if (overlay) {
-        overlay.classList.remove('hidden');
-        overlay.style.display = 'block';
-    }
+    if (!m || !overlay) return;
+    
+    overlay.classList.remove('hidden');
+    overlay.classList.add('active');
     m.classList.remove('hidden');
-    m.style.setProperty('display', 'flex', 'important'); // Garante que o modal centralize sem transparência indesejada
+    
+    // Pequeno delay para garantir que o DOM renderizou o modal antes de disparar ícones ou mapas
+    setTimeout(() => {
+        if (window.lucide) lucide.createIcons();
+        if (id === 'modal-driver-route-detail') {
+            // Se for o modal de rota, podemos precisar forçar o resize dos mapas internos
+            const maps = ['real-route-map', 'predicted-route-map'];
+            maps.forEach(mid => {
+                const mapEl = document.getElementById(mid);
+                if (mapEl && mapEl.firstChild) {
+                    window.dispatchEvent(new Event('resize'));
+                }
+            });
+        }
+    }, 100);
 }
 
 function formatID(id) {
@@ -3228,142 +3244,155 @@ async function loadMeetingReview() {
 }
 
 async function showDriverRouteDetail(driverUid, dateVal, driverName) {
-    const modal = document.getElementById('modal-driver-route-detail');
-    const kmEl = document.getElementById('route-detail-km');
-    const pCountEl = document.getElementById('route-detail-passengers');
-    const content = document.getElementById('driver-route-detail-content');
-    const btnMap = document.getElementById('btn-view-route-map');
-    
     openModal('modal-driver-route-detail');
-    content.innerHTML = '<p style="text-align:center; padding:20px; opacity:0.5;">Buscando detalhes...</p>';
-    document.getElementById('driver-route-map').innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; opacity:0.5;">Carregando mapa...</div>';
+    
+    // Zera os mapas para um fundo liso e preenche loading (simples feedback)
+    ['real-route-map-outbound','real-route-map-return','predicted-route-map'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:0.8rem;">Desenhando...</div>';
+    });
 
-    // Configura o botão Ver no Mapa
-    if (btnMap) {
-        btnMap.onclick = () => viewDriverRouteOnMap(driverUid, dateVal);
-    }
+    ['real-km-val','pred-km-val','real-pay-val','pred-pay-val'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.textContent = '--';
+    });
 
     try {
         const snap = await database.ref(`meeting/history/${dateVal}/${driverUid}`).once('value');
         const d = snap.val();
         if (!d) return;
 
-        kmEl.textContent = `${(d.totalKm || 0).toFixed(2)} km`;
-        const passengers = d.passengers ? Object.values(d.passengers) : [];
-        const accepted = passengers.filter(p => p.status === 'accepted' || p.dropoffStatus === 'confirmed');
-        pCountEl.textContent = accepted.length;
+        // --- CÁLCULOS TOTAIS ---
+        const vType = d.vehicleType || 'carro';
+        const rate = (vType === 'moto') ? 0.40 : 0.90;
+        const totalRealKm = d.totalKm || 0;
+        const totalRealReimb = d.reimbursement || (totalRealKm * rate);
 
-        let html = `
-            <div style="padding:0 2px;">
-                <div style="font-size:0.7rem; color:var(--gold); font-weight:700; text-transform:uppercase; margin-bottom:12px;">Cronologia do Trajeto (Real-Route)</div>
-        `;
+        let predKm = 0;
+        let predReimb = 0;
 
-        if (d.realRoute && d.realRoute.length > 0) {
-            html += d.realRoute.map((step, i) => `
-                <div style="display:flex; gap:12px; margin-bottom:12px; position:relative;">
-                    ${i < d.realRoute.length -1 ? '<div style="position:absolute; left:7px; top:20px; bottom: -12px; width:2px; background:rgba(191,154,86,0.2);"></div>' : ''}
-                    <div style="width:16px; height:16px; border-radius:50%; background:var(--gold); border:3px solid rgba(191,154,86,0.2); z-index:1; flex-shrink:0;"></div>
-                    <div style="flex:1;">
-                        <div style="font-size:0.8rem; font-weight:600;">${step.action || 'Ponto de passsagem'}</div>
-                        <div style="font-size:0.65rem; opacity:0.5; margin-top:2px;">${new Date(step.timestamp).toLocaleTimeString()} • ${step.locationName || 'Local desconhecido'}</div>
-                    </div>
+        document.getElementById('real-vehicle-info').innerHTML = `Veículo: <span style="color:var(--gold);text-transform:uppercase;">${vType} (Taxa R$ ${rate.toFixed(2)})</span>`;
+        
+        const ptStr = d.passengerCount ? `${d.passengerCount} pessoa(s) no convite` : `Nenhum carona`;
+        document.getElementById('real-passengers-info').innerHTML = `<i data-lucide="users" style="width:14px;height:14px;display:inline;"></i> ${ptStr}`;
+
+        document.getElementById('real-km-val').textContent = `${totalRealKm.toFixed(1)} km`;
+        document.getElementById('real-pay-val').textContent = `R$ ${totalRealReimb.toFixed(2)}`;
+
+        // Separa os trajetos
+        const routePts = d.realRoute || [];
+        const meetingIndex = routePts.findIndex(p => p.type === 'meeting');
+        
+        let outboundPts = [];
+        let returnPts = [];
+
+        if (meetingIndex !== -1) {
+            outboundPts = routePts.slice(0, meetingIndex + 1);
+            returnPts = routePts.slice(meetingIndex); // de meeting pra frente
+        } else {
+            outboundPts = [...routePts];
+        }
+
+        // --- FUNÇÃO AUXILIAR PARA GERAR LISTA DE PARADAS (STOPS) ---
+        const buildStopsHtml = (pts) => {
+            if(!pts || !pts.length) return `<div style="font-size:0.7rem;color:var(--muted);">Nenhuma parada.</div>`;
+            const imp = pts.filter(p => p.type && p.type !== 'waypoint'); // só relevantes
+            if(!imp.length) return '';
+            return imp.map(p => `
+                <div style="font-size:0.75rem; color:var(--text); margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                    <span style="color:var(--gold);font-weight:700;">•</span> 
+                    ${new Date(p.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${p.label || p.type}
                 </div>
             `).join('');
-        } else {
-            html += '<p style="font-size:0.75rem; opacity:0.4; text-align:center; padding:20px;">Nenhum dado de Real-Route disponível.</p>';
-        }
+        };
+
+        const buildPredStopsHtml = (pts) => {
+            if(!pts || !pts.length) return '';
+            return pts.map(p => `
+                <div style="font-size:0.75rem; color:var(--text); margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                    <span style="color:#3b82f6;font-weight:700;">•</span> ${p.label || 'Parada'}
+                </div>
+            `).join('');
+        };
+
+        document.getElementById('real-outbound-stops').innerHTML = buildStopsHtml(outboundPts);
+        document.getElementById('real-return-stops').innerHTML = buildStopsHtml(returnPts);
+        document.getElementById('pred-route-stops').innerHTML = buildPredStopsHtml(d.predictedRoute);
+
+        lucide.createIcons();
+
+        // Configuração Padrão de Mapas
+        const mapOptions = { zoom:15, styles:mapDarkStyle, disableDefaultUI:true, zoomControl:true };
         
-        html += '</div>';
-        content.innerHTML = html;
-        lucide.createIcons({ root: content });
+        setTimeout(() => {
+            // MAPA 1: IDA
+            const map1 = new google.maps.Map(document.getElementById('real-route-map-outbound'), { ...mapOptions, center: {lat:-20.32,lng:-40.33} });
+            plotRealTrajectory(map1, outboundPts, '#10b981'); // Verde
 
-        // --- MAP LOGIC ---
-        setTimeout(async () => {
-            const mapDiv = document.getElementById('driver-route-map');
-            const modalMap = new google.maps.Map(mapDiv, {
-                zoom: 14,
-                center: { lat: -20.32, lng: -40.33 },
-                styles: mapDarkStyle, // Usa o mesmo estilo dark do dashboard
-                disableDefaultUI: true,
-                zoomControl: true
-            });
+            // MAPA 2: VOLTA
+            const map2 = new google.maps.Map(document.getElementById('real-route-map-return'), { ...mapOptions, center: {lat:-20.32,lng:-40.33} });
+            plotRealTrajectory(map2, returnPts, '#f59e0b'); // Laranja
 
-            const bounds = new google.maps.LatLngBounds();
+            // MAPA 3: PREVISTO (Google Directions)
+            const map3 = new google.maps.Map(document.getElementById('predicted-route-map'), { ...mapOptions, center: {lat:-20.32,lng:-40.33} });
+            
+            if (d.predictedRoute && d.predictedRoute.length >= 2) {
+                const dirService = new google.maps.DirectionsService();
+                const dirRenderer = new google.maps.DirectionsRenderer({ map: map3, polylineOptions: { strokeColor: '#3b82f6', strokeWeight: 5 } });
+                
+                const origin = d.predictedRoute[0];
+                const destination = d.predictedRoute[d.predictedRoute.length - 1];
+                const waypoints = d.predictedRoute.slice(1, d.predictedRoute.length - 1).map(w => ({
+                    location: new google.maps.LatLng(w.lat, w.lng),
+                    stopover: true
+                }));
 
-            // 1. Trajectory (Polyline)
-            if (d.realRoute && d.realRoute.length > 0) {
-                const path = d.realRoute.map(p => ({ lat: p.lat, lng: p.lng }));
-                const poly = new google.maps.Polyline({
-                    path: path,
-                    strokeColor: '#BF9A56', // Mudando para Dourado para ficar mais "bonitinho"
-                    strokeOpacity: 0.9,
-                    strokeWeight: 4,
-                    map: modalMap
+                dirService.route({
+                    origin: new google.maps.LatLng(origin.lat, origin.lng),
+                    destination: new google.maps.LatLng(destination.lat, destination.lng),
+                    waypoints: waypoints,
+                    optimizeWaypoints: false,
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, (response, status) => {
+                    if (status === 'OK') {
+                        dirRenderer.setDirections(response);
+                        // Soma KM da rota prevista
+                        const distMeters = response.routes[0].legs.reduce((acc, leg) => acc + leg.distance.value, 0);
+                        predKm = distMeters / 1000;
+                        predReimb = predKm * rate;
+                        document.getElementById('pred-km-val').textContent = `${predKm.toFixed(1)} km`;
+                        document.getElementById('pred-pay-val').textContent = `R$ ${predReimb.toFixed(2)}`;
+                    } else {
+                        console.error('Falha no DirectionsPrevisto', status);
+                        document.getElementById('pred-km-val').textContent = `Erro API`;
+                    }
                 });
-                path.forEach(p => bounds.extend(p));
-            }
-
-            // 2. Markers: Home
-            if (d.driverHome) {
-                new google.maps.Marker({
-                    position: d.driverHome,
-                    map: modalMap,
-                    icon: {
-                        path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-                        scale: 5,
-                        fillColor: '#ef4444',
-                        fillOpacity: 1,
-                        strokeWeight: 2,
-                        strokeColor: '#fff'
-                    },
-                    title: 'Casa (Motorista)'
-                });
-                bounds.extend(d.driverHome);
-            }
-
-            // 3. Markers: Meeting
-            const meetingSnap = await database.ref('meeting/config/activeLocation').once('value');
-            const mLoc = meetingSnap.val();
-            if (mLoc && mLoc.lat) {
-                const pos = { lat: mLoc.lat, lng: mLoc.lng };
-                new google.maps.Marker({
-                    position: pos,
-                    map: modalMap,
-                    icon: {
-                        url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png'
-                    },
-                    title: 'Local de Reunião'
-                });
-                bounds.extend(pos);
-            }
-
-            // 4. Marcadores: Caronas (Passageiros)
-
-            accepted.forEach(p => {
-                if (p.lat && p.lng) {
-                    const pos = { lat: p.lat, lng: p.lng };
-                    new google.maps.Marker({
-                        position: pos,
-                        map: modalMap,
-                        icon: {
-                            url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                            scaledSize: new google.maps.Size(24, 24)
-                        },
-                        title: `Carona: ${p.nome}`
-                    });
-                    bounds.extend(pos);
-                }
-            });
-
-            if (!bounds.isEmpty()) {
-                modalMap.fitBounds(bounds);
             } else {
-                modalMap.setCenter({ lat: -20.32, lng: -40.33 });
+                document.getElementById('predicted-route-map').innerHTML = '<div style="padding:40px;text-align:center;color:#64748b;">Sem plano previsto.</div>';
             }
 
-        }, 300);
+        }, 400);
 
-    } catch (e) { content.innerHTML = `Erro: ${e.message}`; }
+    } catch (e) { console.error('Erro na auditoria de rota', e); }
+}
+
+function plotRealTrajectory(mapObj, pts, color) {
+    if (!pts || pts.length < 1) return;
+    const path = pts.filter(p => p.lat && (p.lng || p.lon)).map(p => ({ lat: p.lat, lng: p.lng || p.lon }));
+    if(path.length === 0) return;
+    
+    const poly = new google.maps.Polyline({
+        path: path, strokeColor: color, strokeOpacity: 0.9, strokeWeight: 4, map: mapObj
+    });
+    
+    const bounds = new google.maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    
+    // Coloca marcadores no primeiro e último ponto
+    new google.maps.Marker({ position: path[0], map: mapObj, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 5, fillOpacity:1, fillColor:'#fff', strokeColor:color, strokeWeight:3 }});
+    new google.maps.Marker({ position: path[path.length-1], map: mapObj, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillOpacity:1, fillColor:color, strokeColor:'#fff', strokeWeight:2 }});
+
+    if (!bounds.isEmpty()) mapObj.fitBounds(bounds);
 }
 
 // LOCATIONS
@@ -3786,14 +3815,12 @@ async function showDriverRouteDetail(driverUid, dateVal, driverName) {
 
         setTimeout(() => {
             _renderRouteMapMeeting('real-route-map', d.realRoute || [], '#BF9A56', (calcKm) => {
-                if (savedKm == null) {
-                    const kmEl  = document.getElementById('real-km-val');
-                    const payEl = document.getElementById('real-pay-val');
-                    if (kmEl)  kmEl.textContent  = calcKm.toFixed(2) + ' km';
-                    if (payEl) payEl.textContent = 'R$ ' + (calcKm * rate).toFixed(2);
-                }
+                const kmEl  = document.getElementById('real-km-val');
+                const payEl = document.getElementById('real-pay-val');
+                if (kmEl)  kmEl.textContent  = (savedKm || calcKm).toFixed(2) + ' km';
+                if (payEl) payEl.textContent = 'R$ ' + (savedPay || (savedKm || calcKm) * rate).toFixed(2);
             });
-        }, 200);
+        }, 300);
 
         const stopsEl = document.getElementById('real-route-stops');
         if (stopsEl) {
@@ -3829,7 +3856,7 @@ async function showDriverRouteDetail(driverUid, dateVal, driverName) {
                 if (kmEl)  kmEl.textContent  = calcKm.toFixed(2) + ' km';
                 if (payEl) payEl.textContent = 'R$ ' + (calcKm * rate).toFixed(2);
             });
-        }, 450);
+        }, 600);
 
         const predEl = document.getElementById('pred-route-stops');
         if (predEl) {
