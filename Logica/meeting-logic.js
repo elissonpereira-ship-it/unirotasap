@@ -323,21 +323,37 @@ function updateSeatIndicator() {
 
 // ── CARONAS DISPONÍVEIS ───────────────────────────────────────────
 async function loadAvailablePassengers() {
-    const mySnap = await supabase.database().ref(`meeting/participants/${currentVendorUid}`).once('value');
-    const myLocId = mySnap.val()?.locationId;
+    if (!currentVendorUid) return;
+    
     const list = document.getElementById('available-passengers-list');
-    if (list) list.innerHTML = '<div class="empty-state"><p>Carregando...</p></div>';
+    if (list) list.innerHTML = '<div class="empty-state"><p>Conectando...</p></div>';
+
+    // Se o myLocId estiver nulo, tenta recuperar do estado global ou do banco
+    let myLocId = meetingLocationData?.id;
+    if (!myLocId) {
+        try {
+            const snap = await supabase.database().ref(`meeting/participants/${currentVendorUid}`).once('value');
+            const d = snap.val();
+            if (d?.locationId) {
+                myLocId = d.locationId;
+                meetingLocationData = {
+                    id: d.locationId, name: d.locationName,
+                    address: d.locationAddress || '', lat: d.lat, lng: d.lng, region: d.region || ''
+                };
+            }
+        } catch(e) { console.error("Erro ao recuperar local:", e); }
+    }
+
+    const myLocIdStr = String(myLocId || "").trim();
+    if (!myLocIdStr) {
+        if (list) list.innerHTML = '<div class="empty-state"><p>Selecione um local de reunião primeiro.</p></div>';
+        return;
+    }
 
     if (availablePaxListener) supabase.database().ref('meeting/participants').off('value', availablePaxListener);
 
     availablePaxListener = supabase.database().ref('meeting/participants').on('value', snap => {
         const all = snap.val() || {};
-        const myLocIdStr = String(myLocId || "").trim();
-        if (!myLocIdStr) {
-            list.innerHTML = '<div class="empty-state"><p>Selecione um local de reunião primeiro.</p></div>';
-            return;
-        }
-
         const waiting = Object.values(all).filter(p => {
             const isPax = p.role === 'passenger';
             const isActive = (p.embarkStatus === 'waiting' || p.embarkStatus === 'confirmed');
@@ -346,24 +362,24 @@ async function loadAvailablePassengers() {
             return isPax && isActive && isNotMe && sameLoc;
         });
 
-        console.log(`[DEBUG] Participantes: ${Object.keys(all).length} | Filtrados: ${waiting.length} | Meu Local: ${myLocIdStr}`);
-
         if (!list) return;
         list.innerHTML = '';
         if (!waiting.length) {
             list.innerHTML = `<div class="empty-state"><i data-lucide="users"></i><p>Nenhum carona aguardando.</p>
                 <button class="action-btn info" onclick="startDriverAlone()" style="margin-top:12px;">
                     <i data-lucide="arrow-right"></i> Seguir sem caronas</button></div>`;
-            if (window.lucide) lucide.createIcons(); return;
+            if (window.lucide) lucide.createIcons();
+            return;
         }
+
         waiting.forEach(p => {
             const sel = selectedPassengers.some(s => s.uid === p.uid);
             let dist = '';
-            // Usa embarkLat se disponível, senão lat/lng do participante
             const pLat = p.embarkLat || p.lat;
             const pLng = p.embarkLng || p.lng;
             if (pLat && typeof lastLat !== 'undefined' && lastLat)
                 dist = `<span class="dist-tag">${Math.round(_dist(lastLat, lastLon, pLat, pLng))}m</span>`;
+            
             const div = document.createElement('div');
             div.className = `driver-item${sel ? ' selected' : ''}`;
             div.id = `pax-${p.uid}`;
