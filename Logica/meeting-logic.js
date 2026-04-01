@@ -326,29 +326,23 @@ async function loadAvailablePassengers() {
     if (!currentVendorUid) return;
     
     const list = document.getElementById('available-passengers-list');
-    if (list) list.innerHTML = '<div class="empty-state"><p>Conectando...</p></div>';
+    if (list) list.innerHTML = '<div class="empty-state"><p>Carregando caronas...</p></div>';
 
-    // Se o myLocId estiver nulo, tenta recuperar do estado global ou do banco
+    // Recupera o local de forma direta
     let myLocId = meetingLocationData?.id;
     if (!myLocId) {
         try {
             const snap = await supabase.database().ref(`meeting/participants/${currentVendorUid}`).once('value');
-            const d = snap.val();
-            if (d?.locationId) {
-                myLocId = d.locationId;
-                meetingLocationData = {
-                    id: d.locationId, name: d.locationName,
-                    address: d.locationAddress || '', lat: d.lat, lng: d.lng, region: d.region || ''
-                };
-            }
-        } catch(e) { console.error("Erro ao recuperar local:", e); }
+            myLocId = snap.val()?.locationId;
+        } catch(e) { console.error("Falha na conexão 406:", e); }
     }
 
-    const myLocIdStr = String(myLocId || "").trim();
-    if (!myLocIdStr) {
-        if (list) list.innerHTML = '<div class="empty-state"><p>Selecione um local de reunião primeiro.</p></div>';
+    if (!myLocId) {
+        if (list) list.innerHTML = '<div class="empty-state"><p>Local de reunião não identificado. Por favor, volte e selecione o local novamente.</p></div>';
         return;
     }
+
+    const myLocIdStr = String(myLocId).trim();
 
     if (availablePaxListener) supabase.database().ref('meeting/participants').off('value', availablePaxListener);
 
