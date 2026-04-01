@@ -1,40 +1,3 @@
-/**
- * ═══════════════════════════════════════════════════════════════════
- *   UNIROTAS — MEETING-LOGIC.JS  v3.0  (App do Vendedor)
- *   Lógica completa, todos os cenários cobertos + sugestões Gemini
- * ═══════════════════════════════════════════════════════════════════
- *
- *  INCLUDE ORDER (vendedor.html):
- *  1. supabase-shim.js
- *  2. meeting-logic.js   ← este arquivo
- *
- *  GLOBALS ESPERADOS (definidos em vendedor.html):
- *  currentVendorUid, currentVendorName, lastLat, lastLon,
- *  showToast(msg,type), showLoading(bool), lucide
- *
- *  MELHORIAS v3.0:
- *  ✅ Timeout de retorno: 5 min com botão "Iniciar Agora"
- *  ✅ "No-Show" do carona: botão Furo notifica gestor
- *  ✅ Auto-finalização: 2h após último desembarque, GPS bate com casa
- *  ✅ UI do motorista: botões grandes para uso no carro
- *  ✅ Rota prevista salva ao confirmar caronas (gestor vê imediatamente)
- *  ✅ Rota real acumulada ponto a ponto durante toda a viagem
- *  ✅ GPS do carona enviado ao embarcar (localização de embarque real)
- *  ✅ Alerta de "aguarde exatamente neste local" para carona
- *  ✅ Reenvio de solicitação de retorno
- *  ✅ Histórico completo salvo para gestor com KM real vs previsto
- *
- *  REGRAS DE NEGÓCIO:
- *  • Carro: 4 caronas, R$0,90/km
- *  • Moto : 1 carona,  R$0,40/km
- *  • Presença confirmada ≤ 150 m do local
- *  • Rota prevista gerada ao adicionar caronas → salva no banco
- *  • Rota real acumulada por pontos GPS durante viagem
- *  • Timeout retorno: 5 minutos (ajustável em RETURN_TIMEOUT_MS)
- *  • Auto-finalização: 2h sem ação após último desembarque
- * ═══════════════════════════════════════════════════════════════════
- */
-
 'use strict';
 
 // ── CONSTANTES ────────────────────────────────────────────────────
@@ -1546,8 +1509,36 @@ async function cancelIndividual() {
     }
 }
 
-// ── NOTIFICAÇÃO FLUTUANTE (fallback) ─────────────────────────────
+async function passengerConfirmEmbarkLocation() {
+    if (!currentVendorUid) return;
+    try {
+        const btn = document.getElementById('btn-passenger-confirm-location');
+        const msg = document.getElementById('passenger-embark-confirmed-msg');
+        if (btn) btn.disabled = true;
 
+        const updateData = {
+            lat: lastLat || userLat,
+            lng: lastLon || userLng,
+            embarkLat: lastLat || userLat,
+            embarkLng: lastLon || userLng,
+            embarkName: currentVendorName,
+            embarkStatus: 'confirmed'
+        };
+
+        await supabase.database().ref(`meeting/participants/${currentVendorUid}`).update(updateData);
+
+        if (btn) btn.classList.add('hidden');
+        if (msg) msg.classList.remove('hidden');
+        showToast("Local de embarque confirmado!", "success");
+    } catch (e) {
+        console.error("Confirm Embark Error:", e);
+        showToast("Erro ao confirmar local.", "error");
+        const btn = document.getElementById('btn-passenger-confirm-location');
+        if (btn) btn.disabled = false;
+    }
+}
+
+// ── NOTIFICAÇÃO FLUTUANTE (fallback) ─────────────────────────────
 if (typeof showGlobalNotification === 'undefined') {
     window.showGlobalNotification = function (sender, text, type, data) {
         const c = document.getElementById('floating-notification-container'); if (!c) return;
@@ -1567,3 +1558,8 @@ if (typeof showGlobalNotification === 'undefined') {
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 4000);
     };
 }
+
+// EXPORTS GLOBAIS
+window.passengerConfirmEmbarkLocation = passengerConfirmEmbarkLocation;
+window.MeetingHardReset = MeetingHardReset;
+window.showMeetingView = showMeetingView;
