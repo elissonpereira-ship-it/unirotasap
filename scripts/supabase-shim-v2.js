@@ -29,17 +29,34 @@
 
     async function _readPath(path) {
         const p = path.split('/').filter(Boolean);
+        const q = (t) => _realSB.from(t);
         try {
+            if (p[0]==='usuarios' && p.length===2) {
+                const {data} = await q('usuarios').select('*').eq('uid', p[1]).limit(1);
+                return data && data.length ? data[0] : null;
+            }
+            if (p[0]==='vendedores' && p.length===2) {
+                const {data} = await q('vendedores').select('*').eq('uid', p[1]).limit(1);
+                return data && data.length ? data[0] : null;
+            }
+            if (path==='meeting/locations') {
+                const {data} = await q('meeting_locations').select('*');
+                return _toMap(data,'id');
+            }
             if (p[0]==='meeting'&&p[1]==='participants'&&p.length===3) {
-                const {data} = await _realSB.from('meeting_participants').select('*').eq('vendor_uid',p[2]).limit(1);
+                const {data} = await q('meeting_participants').select('*').eq('vendor_uid',p[2]).limit(1);
                 return data && data.length ? _normPart(data[0]) : null;
             }
             if (path==='meeting/participants') {
-                const {data} = await _realSB.from('meeting_participants').select('*');
+                const {data} = await q('meeting_participants').select('*');
                 return _toMap(data,'vendor_uid',_normPart);
             }
+            if (p[0]==='meeting'&&p[1]==='driverPickups'&&p.length===3) {
+                const {data} = await q('meeting_driver_pickups').select('*').eq('driver_uid',p[2]);
+                return _toMap(data,'passenger_uid', r => ({uid: r.passenger_uid, name: r.passenger_name, status: r.status, dropoffStatus: r.dropoff_status}));
+            }
             if (p[0]==='meeting'&&p[1]==='notifications'&&p.length===3) {
-                const {data} = await _realSB.from('meeting_notifications').select('*').eq('vendor_uid',p[2]).eq('handled',false).order('created_at',{ascending:false}).limit(1);
+                const {data} = await q('meeting_notifications').select('*').eq('vendor_uid',p[2]).eq('handled',false).order('created_at',{ascending:false}).limit(1);
                 return data && data.length ? {...(data[0].data||{}), type: data[0].type, handled: data[0].handled, _id: data[0].id} : null;
             }
             return null;
