@@ -256,341 +256,216 @@
         <div id="view-reuniao" class="scroll-area hidden">
             <!-- TELA 0: Seleção de papel -->
             <div id="meeting-role-select">
-                <div style="margin-bottom: 20px;">
-                    <div class="section-title" style="margin-bottom: 6px;">REUNIÃO</div>
-                    <div id="meeting-location-badge"
-                        style="font-size:0.8rem;color:var(--muted);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-                        <i data-lucide="map-pin" style="display:inline;width:12px;height:12px"></i>
-                        <span id="meeting-location-name">Aguardando local definido...</span>
-                    </div>
-                </div>
-                <div class="meeting-role-card" onclick="selectRole('passenger')">
-                    <div class="role-icon"><i data-lucide="user-check"></i></div>
-                    <div class="role-info">
-                        <h3>Sou Carona</h3>
-                        <p>Vou de carona com um motorista colega</p>
-                    </div>
-                </div>
+                <div class="section-title" style="margin-bottom: 24px; text-align: center;">MÉTODO DE DESLOCAMENTO</div>
                 <div class="meeting-role-card" onclick="selectRole('driver')">
                     <div class="role-icon"><i data-lucide="car"></i></div>
                     <div class="role-info">
-                        <h3>Sou Motorista</h3>
-                        <p>Vou de carro e posso levar até 4 colegas</p>
+                        <h3>Vou de Motorista</h3>
+                        <p>Posso levar colegas no meu veículo. Gerencie sua rota no aplicativo.</p>
                     </div>
                 </div>
                 <div class="meeting-role-card" onclick="selectRole('individual')">
-                    <div class="role-icon"><i data-lucide="bus"></i></div>
+                    <div class="role-icon"><i data-lucide="user"></i></div>
                     <div class="role-info">
-                        <h3>Sou Individual</h3>
-                        <p>Vou por conta própria (ônibus, app, etc.)</p>
+                        <h3>Vou Individual (Sozinho ou Carona)</h3>
+                        <p>Aguarde o convite interativo de um motorista ou confirme sua chegada por conta própria.</p>
                     </div>
                 </div>
             </div>
 
             <!-- TELA 0B: Seleção de LOCAL da reunião -->
             <div id="meeting-location-select" class="hidden">
-                <div class="section-title">SUGESTÕES DE LOCAL</div>
-                <div id="meeting-locations-suggestion-list"
-                    style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
-                    <div class="empty-state">
-                        <i data-lucide="map-pin"></i>
-                        <p>Carregando locais disponíveis...</p>
-                    </div>
-                </div>
+                <div class="section-title">LOCAL DE DESTINO</div>
+                <div id="meeting-locations-suggestion-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;"></div>
                 <button class="action-btn danger" onclick="showMeetingView('meeting-role-select')">
-                    <i data-lucide="arrow-left"></i> Voltar / Trocar Papel
+                    <i data-lucide="arrow-left"></i> Voltar
                 </button>
             </div>
 
-            <!-- TELA 1A: CARONA - Aguardando -->
-            <div id="meeting-passenger-waiting" class="hidden">
+            <!-- TELA 0C: MOTORISTA - Busca e Convite (NOVO) -->
+            <div id="meeting-driver-search" class="hidden">
+                <div class="section-title">QUEM VAI COM VOCÊ?</div>
+
+                <!-- SELETOR DE VEICULO -->
+                <div class="meeting-card" style="margin-bottom:16px; padding:16px;">
+                    <div style="font-size:0.75rem;font-weight:700;color:var(--gold);text-transform:uppercase;margin-bottom:12px;">Meu Veículo</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <label style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:var(--glass);">
+                            <input type="radio" name="vehicle-type" value="carro" checked style="accent-color:var(--gold);" onchange="driverVehicleType='carro'">
+                            <span style="font-size:0.9rem;">🚗 Carro <span style="font-size:0.75rem;color:var(--muted)">R$0,90/km</span></span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:var(--glass);">
+                            <input type="radio" name="vehicle-type" value="moto" style="accent-color:var(--gold);" onchange="driverVehicleType='moto'">
+                            <span style="font-size:0.9rem;">🏍️ Moto <span style="font-size:0.75rem;color:var(--muted)">R$0,40/km</span></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="search-wrap" style="position:relative;margin-bottom:16px;">
+                    <i data-lucide="search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);width:18px;"></i>
+                    <input type="text" id="driver-search-input" placeholder="Buscar carona pelo nome..." style="width:100%;padding:14px 14px 14px 40px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:0.95rem;outline:none;">
+                </div>
+                
+                <div id="driver-search-results" style="background:var(--surface);border-radius:14px;overflow:hidden;margin-bottom:16px;border:1px solid var(--border);"></div>
+
+                <div class="meeting-card" style="margin-bottom:20px;">
+                    <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Lista de Caronas Selecionados</div>
+                    <div id="driver-selected-chips" style="min-height:40px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <button class="action-btn gold" style="flex:2;" onclick="startDriverRoute()">Iniciar Rota (Convites)</button>
+                    <button class="action-btn" style="flex:1;background:var(--surface2);color:var(--text);" onclick="startDriverAlone()">Ir Sozinho</button>
+                </div>
+                <button class="action-btn danger" style="margin-top:16px;" onclick="cancelDriverRoute()">Abortar / Voltar</button>
+            </div>
+
+            <!-- TELA 1A: CARONA - Escolha Individual (Idle) -->
+            <div id="meeting-individual" class="hidden">
                 <div class="status-v2-container">
                     <div class="status-v2-icon pulse">
-                        <i data-lucide="clock"></i>
+                        <i data-lucide="user"></i>
                     </div>
-                    <div class="status-v2-title">Aguardando Motorista</div>
-                    <div class="status-v2-subtitle" id="passenger-waiting-subtitle">
-                        Mantenha o app aberto para ser selecionado.
-                    </div>
-                </div>
-
-                <div id="passenger-embark-card" class="meeting-card" style="margin-top:20px;">
-                    <div
-                        style="font-size:0.75rem; color:var(--gold); font-weight:700; margin-bottom:8px; text-transform:uppercase;">
-                        Seu Local de Embarque</div>
-                    <p style="font-size:0.82rem; color:var(--muted); line-height:1.4;">Confirme onde você está agora
-                        para que o motorista possa te buscar.</p>
-                    <button id="btn-passenger-confirm-location" class="action-btn gold" style="margin-top:12px;"
-                        onclick="passengerConfirmEmbarkLocation()">
-                        <i data-lucide="map-pin"></i> Confirmar Este Local para Embarque
-                    </button>
-                    <div id="passenger-embark-confirmed-msg" class="hidden"
-                        style="margin-top:12px; padding:10px; background:rgba(16,185,129,0.1); border-radius:8px; display:flex; align-items:center; gap:8px;">
-                        <i data-lucide="check-circle" style="color:var(--success); width:18px;"></i>
-                        <span style="font-size:0.82rem; color:var(--success); font-weight:600;">Local Confirmado!
-                            Aguarde aqui.</span>
+                    <div class="status-v2-title">Viajando Individualmente</div>
+                    <div class="status-v2-subtitle" id="individual-location-text">
+                        Dirija até o destino. Motoristas ainda podem te convidar.
                     </div>
                 </div>
 
-                <button class="action-btn danger" style="margin-top:20px;" onclick="cancelPassengerWaiting()">
-                    <i data-lucide="x"></i> Cancelar / Voltar
+                <div class="meeting-card" style="margin-bottom: 20px;">
+                    <h3>DESTINO DESIGNADO</h3>
+                    <div id="individual-location-details" style="font-size:0.88rem;color:var(--muted);line-height:1.6;margin-top:10px;">
+                        Carregando...
+                    </div>
+                </div>
+
+                <button id="btn-individual-confirm" class="action-btn gold" onclick="individualConfirmPresence()">
+                    <i data-lucide="check-circle"></i> Confirmar Presença no Evento (GPS)
+                </button>
+
+                <div id="individual-confirmed" class="hidden" style="text-align:center;padding:20px 0;">
+                    <div class="big-status-icon success"><i data-lucide="check-circle"></i></div>
+                    <div class="status-label" style="color:var(--success)">Presença Confirmada!</div>
+                </div>
+
+                <button class="action-btn danger" style="margin-top:16px" onclick="cancelIndividual()">
+                    <i data-lucide="arrow-left"></i> Voltar / Trocar
                 </button>
             </div>
 
-
-            <!-- TELA 1B: CARONA - Motorista selecionou -->
-            <div id="meeting-passenger-selected" class="hidden">
+            <!-- TELA 1B: CARONA - Viagem Ativa -->
+            <div id="meeting-passenger-active" class="hidden">
                 <div class="status-v2-container">
-                    <div class="status-v2-icon pulse success">
+                    <div class="status-v2-icon success">
                         <i data-lucide="car"></i>
                     </div>
-                    <div class="status-v2-title" id="passenger-driver-name">Motorista em trajeto</div>
-                    <div class="status-v2-subtitle" id="passenger-eta-text">Calculando tempo de chegada...</div>
+                    <div class="status-v2-title" id="passenger-driver-name">A Caminho</div>
+                    <div class="status-v2-subtitle" id="passenger-eta-text">Seu motorista chegará em breve.</div>
                 </div>
 
-                <div class="meeting-card">
+                <div class="meeting-card" style="margin-bottom: 20px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <h3 style="margin:0">STATUS DO EMBARQUE</h3>
-                        <div id="passenger-driver-chat-wrap" style="display:none;">
-                            <button class="p-btn-small chat notif-badge" id="btn-passenger-chat-driver"
-                                onclick="openMeetingChatWithDriver()" style="padding:6px 12px; font-size:0.75rem;">
-                                <i data-lucide="message-circle" style="width:14px;"></i> Chat
+                        <h3 style="margin:0">STATUS DA CORRIDA</h3>
+                        <div id="passenger-driver-chat-wrap">
+                            <button class="p-btn-small chat notif-badge" onclick="openMeetingChatWithDriver()" style="padding:6px 12px;">
+                                <i data-lucide="message-circle" style="width:14px;"></i> Mensagem
                             </button>
                         </div>
                     </div>
-                    <div id="passenger-embark-status"
-                        style="text-align:center; padding:10px 0; font-size:1.1rem; font-weight:600; color:var(--gold);">
-                        Acompanhe o deslocamento pelo mapa.
+                    <div id="passenger-embark-status" style="padding:10px 0; font-size:1.0rem; font-weight:600; color:var(--text);">
+                        ...
                     </div>
                 </div>
 
                 <!-- NOTIFICACAO DE SOLICITACAO DE EMBARQUE -->
-                <div id="passenger-boarding-card" class="meeting-card hidden"
-                    style="border: 2px solid var(--gold); background: rgba(191,154,86,0.1); margin-top:20px;">
+                <div id="passenger-boarding-card" class="meeting-card hidden" style="border: 2px solid var(--gold); background: rgba(191,154,86,0.1); margin-top:20px;">
                     <h3 style="color:var(--gold); display:flex; align-items:center; gap:8px;">
-                        <i data-lucide="check-circle"></i> Confirmar Embarque
+                        <i data-lucide="bell"></i> O Motorista Chegou!
                     </h3>
-                    <p style="font-size:0.88rem; margin:10px 0;">O motorista chegou! Você já embarcou no veículo?</p>
-                    <button class="action-btn success" onclick="passengerConfirmBoarding()">
-                        SIM, CONFIRMAR EMBARQUE
+                    <p style="font-size:0.88rem; margin:10px 0;">O motorista registrou que está no seu ponto de embarque. Você já entrou no carro?</p>
+                    <button class="action-btn gold" onclick="passengerConfirmBoarding()">
+                        SIM, JÁ EMBARQUEI
                     </button>
-                    <p style="font-size:0.7rem; color:var(--muted); margin-top:8px; text-align:center;">Só confirme se
-                        você já estiver dentro do carro.</p>
                 </div>
 
-
-                <!-- NOTIFICACAO DE RETORNO PARA O CARONA -->
-                <div id="passenger-return-card" class="meeting-card hidden"
-                    style="border: 2px solid var(--gold); background: rgba(191,154,86,0.1);">
+                <!-- NOTIFICACAO DE RETORNO -->
+                <div id="passenger-return-card" class="meeting-card hidden" style="border: 2px solid var(--gold); background: rgba(191,154,86,0.1);">
                     <h3 style="color:var(--gold); display:flex; align-items:center; gap:8px;">
-                        <i data-lucide="home"></i> Solicitação de Retorno
+                        <i data-lucide="home"></i> O Retorno Iniciou
                     </h3>
-                    <p style="font-size:0.88rem; margin:10px 0;">O motorista iniciou o retorno. Você vai voltar com ele?
-                    </p>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <button class="action-btn success" onclick="passengerAcceptReturn(true)">
-                            Aceitar
-                        </button>
-                        <button class="action-btn danger" onclick="passengerAcceptReturn(false)">
-                            Recusar
-                        </button>
-                    </div>
+                    <p style="font-size:0.88rem; margin:10px 0;">O motorista iniciou a volta. Acompanhe a corrida.</p>
                 </div>
 
-
-                <button id="btn-passenger-confirm-presence" class="action-btn gold hidden"
-                    onclick="passengerConfirmPresence()">
-                    <i data-lucide="check-circle"></i> Confirmar Presença (GPS)
+                <button id="btn-passenger-confirm-presence" class="action-btn gold hidden" style="margin-bottom:16px;" onclick="passengerConfirmPresence()">
+                    <i data-lucide="check-circle"></i> Confirmar Presença (Estou no local)
                 </button>
 
                 <div id="passenger-reunion-status" class="hidden" style="text-align:center;padding:20px 0;">
                     <div class="big-status-icon success"><i data-lucide="users"></i></div>
                     <div class="status-label" style="color:var(--success)">Em Reunião</div>
-                    <div style="font-size:0.78rem;color:var(--muted);margin-top:6px;">Aguardando término para iniciar o
-                        retorno.</div>
                 </div>
 
                 <button class="action-btn danger" style="margin-top:10px" onclick="cancelPassengerWaiting()">
-                    <i data-lucide="x"></i> Cancelar Participação
+                    <i data-lucide="x"></i> Sair do Veículo (Desistir)
                 </button>
             </div>
 
-            <!-- TELA 2: MOTORISTA - Selecionar caronas -->
-            <div id="meeting-driver-select" class="hidden">
-                <!-- SELETOR DE VEÍCULO -->
-                <div class="meeting-card" style="margin-bottom:12px; padding:16px;">
-                    <div
-                        style="font-size:0.72rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
-                        Meu Veículo</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                        <label id="vehicle-opt-carro"
-                            style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:2px solid var(--gold);background:rgba(191,154,86,0.12);cursor:pointer;">
-                            <input type="radio" name="vehicle-type" value="carro" checked
-                                style="accent-color:var(--gold);" onchange="setDriverVehicle('carro')">
-                            <span style="font-size:0.9rem;">🚗 Carro <span
-                                    style="font-size:0.7rem;opacity:0.6;">R$0,90/km</span></span>
-                        </label>
-                        <label id="vehicle-opt-moto"
-                            style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:2px solid var(--border);cursor:pointer;">
-                            <input type="radio" name="vehicle-type" value="moto" style="accent-color:var(--gold);"
-                                onchange="setDriverVehicle('moto')">
-                            <span style="font-size:0.9rem;">🏍️ Moto <span
-                                    style="font-size:0.7rem;opacity:0.6;">R$0,40/km</span></span>
-                        </label>
-                    </div>
-                </div>
-                <div class="info-banner">
-                    <i data-lucide="info"></i>
-                    <div class="info-banner-text">
-                        <h4>Selecione seus passageiros</h4>
-                        <p>Máximo 4 caronas. A rota será otimizada para economizar km.</p>
-                    </div>
-                </div>
-                <div class="meeting-card">
-                    <!-- BOTÃO SUGESTÃO AUTOMÁTICA -->
-                    <button class="auto-suggest-btn" id="btn-auto-suggest" onclick="autoSuggestPassengers()">
-                        <i data-lucide="zap"></i>
-                        Sugestão Automática (Proximidade)
-                    </button>
-
-                    <!-- INDICADOR DE ASSENTOS -->
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-size:0.75rem; color:var(--muted); font-weight:600; text-transform:uppercase;">
-                            Capacidade do Veículo</div>
-                        <div class="seat-row" id="seat-indicator">
-                            <div class="seat driver-seat" title="Motorista"><i data-lucide="user"
-                                    style="width:14px;"></i></div>
-                            <div class="seat empty" id="seat-v1" title="Vaga 1"></div>
-                            <div class="seat empty" id="seat-v2" title="Vaga 2"></div>
-                            <div class="seat empty" id="seat-v3" title="Vaga 3"></div>
-                            <div class="seat empty" id="seat-v4" title="Vaga 4"></div>
-                        </div>
-                    </div>
-
-                    <h3>VENDEDORES DISPONÍVEIS (CARONA)</h3>
-                    <div id="available-passengers-list">
-                        <div class="empty-state"><i data-lucide="users"></i>
-                            <p>Carregando vendedores aguardando carona...</p>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 2px;">
-                    <span style="font-size:0.78rem;color:var(--muted);">Selecionados: <strong id="selected-count"
-                            style="color:var(--gold)">0</strong>/<span id="capacity-limit">4</span></span>
-                </div>
-                <button id="btn-start-driver-route" class="action-btn gold" onclick="startDriverRoute()" disabled>
-                    <i data-lucide="navigation"></i> Iniciar Rota da Reunião
-                </button>
-                <button class="action-btn danger" style="margin-top:8px" onclick="cancelDriver()">
-                    <i data-lucide="x"></i> Voltar
-                </button>
-            </div>
-
-            <!-- TELA 3: MOTORISTA - Rota em andamento (ida) -->
+            <!-- TELA 3 e 4: MOTORISTA - Rota de Ida e Volta (Mesmo de Antes, com Ajuste Estético) -->
             <div id="meeting-driver-route" class="hidden">
                 <div class="status-v2-container">
                     <div class="status-v2-icon pulse">
                         <i data-lucide="navigation"></i>
                     </div>
-                    <div class="status-v2-title">Rota em Andamento</div>
-                    <div class="status-v2-subtitle">Siga os pontos de coleta e confirme os embarques.</div>
+                    <div class="status-v2-title">Ida em Andamento</div>
+                    <div class="status-v2-subtitle">Embarque os colegas e vá para a reunião.</div>
                 </div>
 
                 <div class="meeting-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <h3 style="margin:0">LISTA DE EMBARQUE</h3>
-                        <div id="driver-chat-wrap" style="display:none;"></div>
-                    </div>
+                    <h3>AGENDA DE EMBARQUE</h3>
                     <div id="driver-pickup-list" style="margin-top:10px;"></div>
-
                 </div>
 
-                <!-- BOTOES DE AÇÃO -->
-                <button id="btn-driver-confirm-presence" class="action-btn gold hidden"
-                    onclick="driverConfirmPresence()">
-                    <i data-lucide="check-circle"></i> Confirmar Minha Presença (GPS)
+                <button id="btn-driver-confirm-presence" class="action-btn gold hidden" onclick="driverConfirmPresence()">
+                    <i data-lucide="check-circle"></i> Cheguei na Reunião! (Confirmar Presença)
                 </button>
 
-                <button class="action-btn info" onclick="openDriverMapRoute(false)" style="margin-top:10px">
-                    <i data-lucide="map"></i> Ver Rota no Google Maps
+                <button class="action-btn info" style="margin-top:16px;" onclick="openDriverMapRoute(false)">
+                    <i data-lucide="map"></i> Guiar via Google Maps
                 </button>
 
                 <div id="driver-meeting-in-progress" class="hidden" style="text-align:center;padding:20px 0;">
                     <div class="big-status-icon success"><i data-lucide="users"></i></div>
-                    <div class="status-label" style="color:var(--success); margin-bottom: 20px;">Em Reunião (Fase Atual)
-                    </div>
-                    <button class="action-btn danger" style="margin-top:20px;" onclick="endMeeting()">
-                        <i data-lucide="flag"></i> Encerrar Reunião
+                    <div class="status-label" style="color:var(--success); margin-bottom: 20px;">Você está na Reunião</div>
+                    <button class="action-btn gold" style="margin-top:20px;" onclick="endMeeting()">
+                        <i data-lucide="flag"></i> Iniciar Volta / Retorno
                     </button>
-                    <div style="font-size:0.75rem;color:var(--muted);margin-top:10px;">Clique acima para encerrar e
-                        iniciar o retorno.</div>
                 </div>
 
-                <!-- BOTÃO DE EMERGÊNCIA (CANCELAR) -->
-                <button class="action-btn danger" style="margin-top:30px; opacity: 0.7;" onclick="cancelDriver()">
-                    <i data-lucide="x"></i> Sair / Cancelar Rota
+                <button class="action-btn danger" style="margin-top:30px; opacity: 0.7;" onclick="cancelDriverRoute()">
+                    <i data-lucide="x"></i> Cancelar Viagem
                 </button>
             </div>
 
-            <!-- TELA 4: MOTORISTA - Rota de retorno -->
             <div id="meeting-driver-return" class="hidden">
                 <div class="status-v2-container">
                     <div class="status-v2-icon success">
                         <i data-lucide="home"></i>
                     </div>
-                    <div class="status-v2-title">Rota de Retorno</div>
-                    <div class="status-v2-subtitle">Entregue os colegas com segurança em seus destinos.</div>
+                    <div class="status-v2-title">Retorno Seguro</div>
+                    <div class="status-v2-subtitle">Desembarque os colegas antes de encerrar seu expediente.</div>
                 </div>
 
                 <div class="meeting-card">
                     <h3>ORDEM DE DESEMBARQUE</h3>
                     <div id="driver-dropoff-list" style="margin-top:10px;"></div>
-
                 </div>
+
                 <button id="btn-driver-arrived-home" class="action-btn success hidden" onclick="driverArrivedHome()">
-                    <i data-lucide="home"></i> Finalizar: Cheguei em Casa
+                    <i data-lucide="home"></i> Finalizar Turno: Cheguei em Casa
                 </button>
 
-                <button class="action-btn info" onclick="openDriverMapRoute(true)" style="margin-top:10px">
-                    <i data-lucide="map"></i> Ver Rota de Retorno
-                </button>
-
-                <!-- BOTÃO DE EMERGÊNCIA (CANCELAR) -->
-                <button class="action-btn danger" style="margin-top:30px; opacity: 0.7;" onclick="cancelDriver()">
-                    <i data-lucide="x"></i> Sair / Cancelar Rota
-                </button>
-            </div>
-
-            <!-- TELA 5: INDIVIDUAL -->
-            <div id="meeting-individual" class="hidden">
-                <div class="status-v2-container">
-                    <div class="status-v2-icon pulse">
-                        <i data-lucide="bus"></i>
-                    </div>
-                    <div class="status-v2-title">Aguardando Chegada</div>
-                    <div class="status-v2-subtitle" id="individual-location-text">
-                        Dirija até o local da reunião definido pelo gestor.
-                    </div>
-                </div>
-
-                <div class="meeting-card">
-                    <h3>LOCAL DA REUNIÃO</h3>
-                    <div id="individual-location-details" style="font-size:0.88rem;color:var(--muted);line-height:1.6;">
-                        Carregando informações do local...
-                    </div>
-                </div>
-                <button id="btn-individual-confirm" class="action-btn gold" onclick="individualConfirmPresence()">
-                    <i data-lucide="check-circle"></i> Confirmar Presença (GPS)
-                </button>
-                <div id="individual-confirmed" class="hidden" style="text-align:center;padding:20px 0;">
-                    <div class="big-status-icon success"><i data-lucide="check-circle"></i></div>
-                    <div class="status-label" style="color:var(--success)">Presença Confirmada!</div>
-                    <div style="font-size:0.78rem;color:var(--muted);margin-top:6px;">Informação enviada ao sistema.
-                    </div>
-                </div>
-                <button class="action-btn danger" style="margin-top:10px" onclick="cancelIndividual()">
-                    <i data-lucide="x"></i> Voltar
+                <button class="action-btn info" style="margin-top:16px;" onclick="openDriverMapRoute(true)">
+                    <i data-lucide="map"></i> Rota do Retorno (Maps)
                 </button>
             </div>
         </div>
