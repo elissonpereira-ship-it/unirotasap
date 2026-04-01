@@ -1,12 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>UniRotas - App Vendedor</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="../src/vendedor.css">
 </head>
+
 <body>
     <!-- AUTH SPLASH -->
     <div id="auth-splash"
@@ -87,7 +91,7 @@
     <!-- ══════════════════════════════════════ -->
     <div id="screen-login" class="screen" style="display:none">
         <div class="login-top">
-            <img src="assets/logo_empresa.png" alt="Logo" class="login-logo">
+            <img src="../assets/logo_empresa.png" alt="Logo" class="login-logo">
             <div class="login-brand"><span>Uni</span>Rotas</div>
             <div class="login-sub">Integridade Logística</div>
         </div>
@@ -668,7 +672,7 @@
 
     <div id="toast"></div>
 
-        <!-- MODAL ESQUECI MINHA SENHA -->
+    <!-- MODAL ESQUECI MINHA SENHA -->
     <div id="forgot-password-modal" class="modal-overlay" style="display:none; align-items:center;">
         <div class="modal-content glass-panel" style="max-width:400px; padding:30px;">
             <h3 style="margin-bottom:15px; color:var(--gold);">Recuperar Senha</h3>
@@ -680,7 +684,8 @@
             </div>
             <div class="modal-footer" style="padding-top:20px;">
                 <button class="btn btn-secondary" onclick="closeModal('forgot-password-modal')">Voltar</button>
-                <button class="btn btn-primary" onclick="handleSendResetEmail()" id="btn-send-reset">Enviar Link</button>
+                <button class="btn btn-primary" onclick="handleSendResetEmail()" id="btn-send-reset">Enviar
+                    Link</button>
             </div>
         </div>
     </div>
@@ -696,14 +701,16 @@
                 <input type="password" id="new-pass-input" class="form-input" placeholder="MÃ­nimo 6 caracteres">
             </div>
             <div class="modal-footer" style="padding-top:20px;">
-                <button class="btn btn-primary" style="width:100%" onclick="handleUpdatePassword()" id="btn-update-pass">Salvar Nova Senha</button>
+                <button class="btn btn-primary" style="width:100%" onclick="handleUpdatePassword()"
+                    id="btn-update-pass">Salvar Nova Senha</button>
             </div>
         </div>
     </div>
 
     <!-- SCRIPTS EXTERNOS -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAO46S-g-tbXDg9aljUNajplLQV_3i7c9Q&libraries=places,geometry"></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAO46S-g-tbXDg9aljUNajplLQV_3i7c9Q&libraries=places,geometry"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
@@ -712,4 +719,5 @@
     <script src="../Logica/meeting-logic.js"></script>
 
 </body>
+
 </html>
