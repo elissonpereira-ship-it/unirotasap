@@ -453,17 +453,16 @@ const cancelDriverRoute = cancelDriver;
 function _listenDriverInfo(driverUid) {
   currentDriverUid = driverUid;
 
-  setTimeout(() => {
+  setInterval(() => {
     const btnChat = document.getElementById('menu-driver-chat');
     if (btnChat) btnChat.style.display = 'flex';
-    if (typeof _initPassengerFloatChat === 'function') _initPassengerFloatChat();
-
+    
     const dashAlert = document.getElementById('dashboard-pickup-alert');
     if (dashAlert && !dashAlert.innerHTML.includes('Motorista à Caminho')) {
       dashAlert.innerHTML = `<div style="background: rgba(191,154,86,0.15); border: 1px solid var(--gold); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px;"><div style="background:var(--gold); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--bg); flex-shrink:0;"><i data-lucide="car" style="width:22px;height:22px;"></i></div><div><div style="font-size:0.8rem; color:var(--gold); font-weight:800; text-transform:uppercase;">🚗 Motorista à Caminho</div><div style="font-size:0.95rem; font-weight:600; margin-top:2px;">O seu motorista associado já está na sua rota.</div></div></div>`;
       if (window.lucide) lucide.createIcons();
     }
-  }, 1000);
+  }, 2000);
 
   if (_driverInfoListener) _db().ref(`vendedores/${driverUid}`).off('value', _driverInfoListener);
   _driverInfoListener = _db().ref(`vendedores/${driverUid}`).on('value', snap => {
