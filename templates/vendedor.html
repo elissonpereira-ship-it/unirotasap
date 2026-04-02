@@ -106,8 +106,12 @@
             <h2 id="auth-title">Acesso Restrito</h2>
             <div id="signup-fields" class="hidden">
                 <div class="input-group">
-                    <label>Nome Completo</label>
-                    <input type="text" id="user-name-input" class="form-input" placeholder="Seu nome completo">
+                    <label>Nome Completo (Apenas Letras)</label>
+                    <input type="text" id="user-name-input" class="form-input" placeholder="Seu nome completo" oninput="this.value = this.value.replace(/[^a-zA-ZáàâãéèêíïóôõöúçñÀÁÂÃÈÉÊÌÍÏÒÓÔÕÖÙÚÇÑ ]/g, '')">
+                </div>
+                <div class="input-group">
+                    <label>Centro de Custo</label>
+                    <input type="text" id="user-cc-input" class="form-input" placeholder="Ex: 1234.56">
                 </div>
                 <div class="input-group">
                     <label>E-mail para verificação</label>
