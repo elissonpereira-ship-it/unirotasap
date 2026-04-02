@@ -536,6 +536,7 @@ function listenForMeetingNotifications(uid) {
         }
         break;
       case 'boardingrequest':
+        if (typeof showScreen === 'function') showScreen('reuniao');
         showMeetingView('meeting-passenger-active');
         document.getElementById('passenger-boarding-card')?.classList.remove('hidden');
         const _pe = document.getElementById('passenger-embark-status');
