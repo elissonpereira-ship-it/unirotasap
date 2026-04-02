@@ -78,6 +78,7 @@ async function MeetingHardReset() {
   currentMeetingRole = currentDriverUid = meetingLocationData = null;
   driverPassengers = driverRealRoute = [];
   driverVehicleType = 'carro';
+  localStorage.removeItem('ur_chat_hist');
   if (currentVendorUid) { try { const s = await db.ref(`meeting/participants/${currentVendorUid}`).once('value'); const p = s.val(); if (p && !['finished', 'done'].includes(p.phase)) await db.ref(`meeting/participants/${currentVendorUid}`).remove(); } catch (_) { } }
 }
 
@@ -167,7 +168,8 @@ async function _searchPassengers(query) {
   try {
     const snap = await _db().ref('usuarios').once('value');
     const users = snap.val() || {};
-    const results = Object.values(users).filter(u => u.role !== 'admin' && u.uid !== currentVendorUid && !driverPassengers.some(p => p.uid === u.uid) && ((u.name || '').toLowerCase().includes(query.toLowerCase()) || (u.cpf || '').replace(/\D/g, '').includes(query.replace(/\D/g, '')))).slice(0, 6);
+    const qN = query.replace(/\D/g, '');
+    const results = Object.values(users).filter(u => u.role !== 'admin' && u.uid !== currentVendorUid && !driverPassengers.some(p => p.uid === u.uid) && ((u.name || '').toLowerCase().includes(query.toLowerCase()) || (qN.length > 0 && (u.cpf || '').replace(/\D/g, '').includes(qN)))).slice(0, 6);
     c.innerHTML = '';
     if (!results.length) { c.innerHTML = `<div style="padding:12px;font-size:0.82rem;color:var(--muted);text-align:center;">Nenhum vendedor encontrado.</div>`; return; }
     results.forEach(u => {
@@ -246,14 +248,16 @@ function _loadPickupList() {
     const allDone = pks.every(p => ['boarded', 'no_show', 'rejected'].includes(p.status));
     document.getElementById('btn-driver-confirm-presence')?.classList.toggle('hidden', !allDone);
 
-    const STATUS = { invited: { label: 'Aguardando aceite', badge: 'waiting' }, accepted: { label: 'A Caminho', badge: 'picked' }, boarding_pending: { label: 'Embarcando?', badge: 'waiting' }, boarded: { label: 'A bordo ✓', badge: 'picked' }, no_show: { label: 'Ausente', badge: 'refused' }, rejected: { label: 'Recusou', badge: 'refused' } };
+    const STATUS = { invited: { label: 'Aguardando aceite', badge: 'waiting' }, accepted: { label: 'A Caminho', badge: 'picked' }, boarding_pending: { label: 'Embarcando?', badge: 'waiting' }, boarded: { label: 'A bordo ✓', badge: 'picked' }, no_show: { label: 'Ausente', badge: 'refused' }, rejected: { label: 'Recusou', badge: 'refused' }, rejected_boarding: { label: 'Atrasado', badge: 'refused' } };
 
     pks.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(p => {
       const s = STATUS[p.status] || { label: p.status, badge: 'waiting' };
       const div = document.createElement('div'); div.className = 'passenger-item';
 
-      const canPick = p.status === 'accepted', canNoShow = ['invited', 'accepted', 'boarding_pending'].includes(p.status);
-      div.innerHTML = `<div style="flex:1;"><div class="p-name">${p.name}</div><div class="p-actions" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><button class="p-btn-small chat" onclick="openMeetingChat('${p.uid}','${p.name}')"><i data-lucide="message-circle" style="display:inline;width:12px;"></i> Chat</button>${canPick ? `<button class="p-btn-small pickup" style="font-size:0.82rem;padding:8px 14px;background:var(--gold);color:var(--bg);border:none;" onclick="driverRequestBoarding('${p.uid}','${p.name}')"><i data-lucide="map-pin" style="display:inline;width:13px;"></i> Cheguei no Ponto</button>` : ''}${canNoShow ? `<button class="p-btn-small drop" style="background:rgba(239,68,68,0.12);" onclick="driverMarkNoShow('${p.uid}','${p.name}')">Faltou</button>` : ''}</div></div><span class="p-status-badge ${s.badge}">${s.label}</span>`;
+      const canPick = p.status === 'accepted' || p.status === 'rejected_boarding', canNoShow = ['invited', 'accepted', 'boarding_pending', 'rejected_boarding'].includes(p.status);
+      const btnTxt = p.status === 'rejected_boarding' ? 'Buzinar de Novo' : 'Cheguei no Ponto';
+      
+      div.innerHTML = `<div style="flex:1;"><div class="p-name">${p.name}</div><div class="p-actions" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><button class="p-btn-small chat" onclick="openMeetingChat('${p.uid}','${p.name}')"><i data-lucide="message-circle" style="display:inline;width:12px;"></i> Chat</button>${canPick ? `<button class="p-btn-small pickup" style="font-size:0.82rem;padding:8px 14px;background:var(--gold);color:var(--bg);border:none;" onclick="driverRequestBoarding('${p.uid}','${p.name}')"><i data-lucide="map-pin" style="display:inline;width:13px;"></i> ${btnTxt}</button>` : ''}${canNoShow ? `<button class="p-btn-small drop" style="background:rgba(239,68,68,0.12);" onclick="driverMarkNoShow('${p.uid}','${p.name}')">Faltou</button>` : ''}</div></div><span class="p-status-badge ${s.badge}">${s.label}</span>`;
       c.appendChild(div); _listenChatDot(p.uid);
     });
     if (window.lucide) lucide.createIcons(); updateUniversalPresence();
@@ -275,6 +279,19 @@ async function driverMarkNoShow(pUid, pName) {
   await _db().ref(`meeting/notifications/${pUid}`).set({ type: 'noShow', driverName: currentVendorName, handled: false, timestamp: Date.now() });
   showToast(`Informamos a gestão a ausência de ${pName}.`, 'info');
 }
+
+async function passengerRejectBoarding() {
+  if (!currentDriverUid || !currentVendorUid) return;
+  await _db().ref(`meeting/driverPickups/${currentDriverUid}/${currentVendorUid}`).update({ status: 'rejected_boarding' });
+  await _db().ref(`meeting/participants/${currentVendorUid}`).update({ embarkStatus: 'accepted' });
+  document.getElementById('passenger-boarding-card').classList.add('hidden');
+  const dEmb = document.getElementById('passenger-embark-status');
+  if(dEmb) dEmb.innerHTML = `<span style="color:var(--gold)"><i data-lucide="clock"></i> Atraso informado. Fale com o motorista no Chat.</span>`;
+  await _db().ref(`meeting/notifications/${currentDriverUid}`).set({ type: 'passenger_delayed', passengerName: currentVendorName, passengerUid: currentVendorUid, handled: false, timestamp: Date.now() });
+  if (window.lucide) lucide.createIcons();
+  showToast('Você informou seu atraso.', 'info');
+}
+window.passengerRejectBoarding = passengerRejectBoarding;
 
 /* ────────────────────────────────────────────────────────
  * PRESENÇA NO LOCAL DA REUNIÃO
@@ -518,7 +535,17 @@ function listenForMeetingNotifications(uid) {
           showToast(`Mochila nas costas! O motorista ${d.driverName} vem te buscar.`, 'success');
         }
         break;
-      case 'boardingrequest': showToast(`🚨 O(a) ${d.driverName} chegou na base. CONFIRME SUA ENTRADA no app dele!`, 'warning'); document.getElementById('passenger-boarding-card')?.classList.remove('hidden'); break;
+      case 'boardingrequest': 
+        showMeetingView('meeting-passenger-active');
+        document.getElementById('passenger-boarding-card')?.classList.remove('hidden'); 
+        const _pe = document.getElementById('passenger-embark-status');
+        if(_pe) _pe.innerHTML = `<span style="color:var(--success)"><i data-lucide="check-circle"></i> O Motorista Chegou! Dirija-se ao veículo.</span>`;
+        if (window.lucide) lucide.createIcons();
+        showToast(`🚨 O(a) ${d.driverName} chegou na base. CONFIRME SUA ENTRADA no app dele!`, 'warning'); 
+        break;
+      case 'passenger_delayed':
+        if (currentMeetingRole === 'driver') showToast(`🚨 O Carona ${d.passengerName} informou um Atraso. Chame-o no chat!`, 'warning');
+        break;
       case 'return_started': showToast('A chapa esfriou e o motorista ligou o carro de volta pra casa.', 'info'); document.getElementById('passenger-reunion-status')?.classList.add('hidden'); document.getElementById('passenger-return-card')?.classList.remove('hidden'); break;
       case 'dropoff_request': showToast('Sua garagem? Confirme no app para dar tranquilidade pro Motora!', 'info'); _showPassengerDropoffConfirm(d.driverUid); break;
       case 'driverCancelled': showToast(`💀 Seu Motorista (${d.driverName}) dissolveu a rota. Vá de Ônibus!`, 'error'); currentDriverUid = null; currentMeetingRole = 'individual'; showMeetingView('meeting-individual'); break;
@@ -529,11 +556,12 @@ function listenForMeetingNotifications(uid) {
         // SEMPRE Injeta na caixa do Bate Papo (mesmo no Background)
         const cMsgs = document.getElementById('chat-messages');
         if (cMsgs) {
-            const b = document.createElement('div');
-            b.style.cssText = `max-width:80%; padding:10px 14px; border-radius:18px; margin-bottom:8px; align-self:flex-start; background:var(--surface2); color:var(--text); font-size:0.9rem;`;
-            b.innerHTML = `<div>${d.text}</div><div style="font-size:0.65rem; color:var(--muted); margin-top:4px; text-align:right;">${_fmtTime(d.timestamp)}</div>`;
-            cMsgs.appendChild(b);
-            setTimeout(() => cMsgs.scrollTop = cMsgs.scrollHeight, 50);
+          const b = document.createElement('div');
+          b.style.cssText = `max-width:80%; padding:10px 14px; border-radius:18px; margin-bottom:8px; align-self:flex-start; background:var(--surface2); color:var(--text); font-size:0.9rem;`;
+          b.innerHTML = `<div>${d.text}</div><div style="font-size:0.65rem; color:var(--muted); margin-top:4px; text-align:right;">${_fmtTime(d.timestamp)}</div>`;
+          cMsgs.appendChild(b);
+          localStorage.setItem('ur_chat_hist', (localStorage.getItem('ur_chat_hist')||'') + b.outerHTML);
+          setTimeout(() => cMsgs.scrollTop = cMsgs.scrollHeight, 50);
         }
 
         if (!isChatOpen) {
@@ -611,6 +639,7 @@ function openMeetingChat(targetUid, targetName) {
   const cMsgs = document.getElementById('chat-messages');
   if (!cMsgs.innerHTML.includes('Chat Exclusivo com')) {
     cMsgs.insertAdjacentHTML('afterbegin', `<div style="text-align:center;color:var(--gold);font-weight:bold;margin:10px 0;">Chat Exclusivo com ${targetName}</div><div style="text-align:center;color:var(--muted);font-size:0.75rem;margin-bottom:10px;">As mensagens sumirão após a viagem.</div>`);
+    cMsgs.insertAdjacentHTML('beforeend', localStorage.getItem('ur_chat_hist') || '');
   }
   showScreen('chat');
 }
@@ -632,6 +661,7 @@ async function sendChatMessage() {
   b.style.cssText = `max-width:80%; padding:10px 14px; border-radius:18px; margin-bottom:8px; align-self:flex-end; background:var(--gold); color:var(--bg); font-size:0.9rem;`;
   b.innerHTML = `<div>${txt}</div><div style="font-size:0.65rem; color:rgba(0,0,0,0.5); margin-top:4px; text-align:right;">${_fmtTime(Date.now())}</div>`;
   cMsgs.appendChild(b);
+  localStorage.setItem('ur_chat_hist', (localStorage.getItem('ur_chat_hist')||'') + b.outerHTML);
   setTimeout(() => cMsgs.scrollTop = cMsgs.scrollHeight, 50);
 
   // Dispara via Push de Notificação
