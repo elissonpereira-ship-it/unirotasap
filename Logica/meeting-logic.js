@@ -489,7 +489,10 @@ async function cancelPassengerWaiting() {
 }
 
 /* ── CAIXA MAGICA DE CONVITES DO MOTORISTA (POPUP) ── */
+let _meetingNotifLock = false;
 function listenForMeetingNotifications(uid) {
+  if (_meetingNotifLock) return;
+  _meetingNotifLock = true;
   _db().ref(`meeting/notifications/${uid}`).on('value', async snap => {
     const d = snap.val(); if (!d || d.handled) return;
 
