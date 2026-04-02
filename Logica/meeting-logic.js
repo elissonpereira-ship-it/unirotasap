@@ -453,16 +453,26 @@ const cancelDriverRoute = cancelDriver;
 function _listenDriverInfo(driverUid) {
   currentDriverUid = driverUid;
 
-  setInterval(() => {
+  setInterval(async () => {
+    const s = await _db().ref(`meeting/participants/${currentVendorUid}/embarkStatus`).once('value');
+    const status = s.val();
+
+    // Chat só aparece se NÃO estiver embarcado
     const btnChat = document.getElementById('menu-driver-chat');
-    if (btnChat) btnChat.style.display = 'flex';
+    if (btnChat) btnChat.style.display = (status === 'boarded' || !currentDriverUid) ? 'none' : 'flex';
     
     const dashAlert = document.getElementById('dashboard-pickup-alert');
-    if (dashAlert && !dashAlert.innerHTML.includes('Motorista à Caminho')) {
-      dashAlert.innerHTML = `<div style="background: rgba(191,154,86,0.15); border: 1px solid var(--gold); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px;"><div style="background:var(--gold); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--bg); flex-shrink:0;"><i data-lucide="car" style="width:22px;height:22px;"></i></div><div><div style="font-size:0.8rem; color:var(--gold); font-weight:800; text-transform:uppercase;">🚗 Motorista à Caminho</div><div style="font-size:0.95rem; font-weight:600; margin-top:2px;">O seu motorista associado já está na sua rota.</div></div></div>`;
+    if (dashAlert) {
+      if (status === 'boarded') {
+        dashAlert.innerHTML = `<div style="background: rgba(34,197,94,0.1); border: 1px solid var(--success); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px;"><div style="background:var(--success); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:white; flex-shrink:0;"><i data-lucide="map-pin" style="width:22px;height:22px;"></i></div><div><div style="font-size:0.8rem; color:var(--success); font-weight:800; text-transform:uppercase;">🚗 A caminho da reunião...</div><div style="font-size:0.95rem; font-weight:600; margin-top:2px;">Você embarcou no veículo com sucesso.</div></div></div>`;
+      } else if (currentDriverUid) {
+        if (!dashAlert.innerHTML.includes('Motorista à Caminho')) {
+           dashAlert.innerHTML = `<div style="background: rgba(191,154,86,0.15); border: 1px solid var(--gold); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px;"><div style="background:var(--gold); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--bg); flex-shrink:0;"><i data-lucide="car" style="width:22px;height:22px;"></i></div><div><div style="font-size:0.8rem; color:var(--gold); font-weight:800; text-transform:uppercase;">🚗 Motorista à Caminho</div><div style="font-size:0.95rem; font-weight:600; margin-top:2px;">O seu motorista associado já está na sua rota.</div></div></div>`;
+        }
+      }
       if (window.lucide) lucide.createIcons();
     }
-  }, 2000);
+  }, 2500);
 
   if (_driverInfoListener) _db().ref(`vendedores/${driverUid}`).off('value', _driverInfoListener);
   _driverInfoListener = _db().ref(`vendedores/${driverUid}`).on('value', snap => {
@@ -480,7 +490,11 @@ function _renderPassengerStatus(d) {
   if (st) st.innerHTML = `<div>${MAP[d.embarkStatus] || 'Pressione o cinto e segure firme.'}</div>`;
   if (wr) wr.style.display = ['accepted', 'boarded', 'boarding_pending'].includes(d.embarkStatus) ? 'block' : 'none';
   if (d.embarkStatus === 'boarding_pending') document.getElementById('passenger-boarding-card')?.classList.remove('hidden');
-  if (d.embarkStatus === 'boarded') { document.getElementById('passenger-boarding-card')?.classList.add('hidden'); updateUniversalPresence(); }
+  if (d.embarkStatus === 'boarded') { 
+    document.getElementById('passenger-boarding-card')?.classList.add('hidden'); 
+    localStorage.removeItem('ur_chat_hist'); // Limpa chat ao embarcar
+    updateUniversalPresence(); 
+  }
   if (d.embarkStatus === 'idle' && currentMeetingRole === 'passenger') { currentDriverUid = null; showMeetingView('meeting-individual'); showToast('Você deixou o veículo.', 'info'); }
 }
 
@@ -535,13 +549,11 @@ function listenForMeetingNotifications(uid) {
         }
         break;
       case 'boardingrequest':
-        if (typeof showScreen === 'function') showScreen('reuniao');
-        showMeetingView('meeting-passenger-active');
         document.getElementById('passenger-boarding-card')?.classList.remove('hidden');
         const _pe = document.getElementById('passenger-embark-status');
         if (_pe) _pe.innerHTML = `<span style="color:var(--success)"><i data-lucide="check-circle"></i> O Motorista Chegou! Dirija-se ao veículo.</span>`;
         if (window.lucide) lucide.createIcons();
-        showToast(`🚨 O(a) ${d.driverName} chegou na base. CONFIRME SUA ENTRADA no app dele!`, 'warning');
+        showToast(`🚨 O(a) ${d.driverName} chegou na base. CONFIRME SUA ENTRADA no dashboard!`, 'warning');
         break;
       case 'passenger_delayed':
         if (currentMeetingRole === 'driver') showToast(`🚨 O Carona ${d.passengerName} informou um Atraso. Chame-o no chat!`, 'warning');
