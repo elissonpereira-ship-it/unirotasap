@@ -149,6 +149,9 @@
             if (p[0] === 'meeting' && p[1] === 'notifications' && p.length === 3) {
                 await _realSB.from('meeting_notifications').insert({ vendor_uid: p[2], type: d.type, handled: d.handled || false, data: d });
             }
+            if (p[0] === 'meeting' && p[1] === 'history' && p.length === 4) {
+                await _realSB.from('meeting_history').upsert({ date: p[2], vendor_uid: p[3], data: d, updated_at: new Date().toISOString() });
+            }
         }
 
         async update(d) {
@@ -158,15 +161,18 @@
             }
             if (p[0] === 'meeting' && p[1] === 'driverPickups' && p.length === 4) {
                 let up = {};
-                if(d.status) up.status = d.status;
-                if(d.dropoffStatus) up.dropoff_status = d.dropoffStatus;
-                if(Object.keys(up).length > 0) await _realSB.from('meeting_driver_pickups').update(up).eq('driver_uid', p[2]).eq('passenger_uid', p[3]);
+                if (d.status) up.status = d.status;
+                if (d.dropoffStatus) up.dropoff_status = d.dropoffStatus;
+                if (Object.keys(up).length > 0) await _realSB.from('meeting_driver_pickups').update(up).eq('driver_uid', p[2]).eq('passenger_uid', p[3]);
             }
             if (p[0] === 'meeting' && p[1] === 'notifications' && p.length === 3) {
                 await _realSB.from('meeting_notifications').update({ handled: d.handled }).eq('vendor_uid', p[2]);
             }
             if (p[0] === 'vendedores' && p.length === 2) {
                 await _realSB.from('vendedores').update({ lat: d.lat, lon: d.lon, status: d.status }).eq('uid', p[1]);
+            }
+            if (p[0] === 'meeting' && p[1] === 'history' && p.length === 4) {
+                await _realSB.from('meeting_history').upsert({ date: p[2], vendor_uid: p[3], data: d, updated_at: new Date().toISOString() });
             }
         }
 
