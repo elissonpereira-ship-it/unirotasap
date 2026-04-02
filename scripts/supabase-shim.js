@@ -130,21 +130,6 @@ async function _readPath(path) {
         const {data} = await q('meeting_attendance').select('*').eq('date',p[2]);
         return _toMap(data,'vendor_uid',r=>({name:r.name,role:r.role,driverUid:r.driver_uid,locationId:r.location_id,locationName:r.location_name,region:r.region}));
     }
-    if (path==='meeting/history') {
-        const {data} = await q('meeting_history').select('*');
-        const res={};
-        (data||[]).forEach(r=>{
-            if (!res[r.date]) res[r.date]={};
-            res[r.date][r.driver_uid]={driverName:r.driver_name,driverUid:r.driver_uid,passengers:r.passengers,vehicleType:r.vehicle_type||'carro',realRoute:r.real_route||[],predictedRoute:r.predicted_route||[]};
-        });
-        return Object.keys(res).length ? res : null;
-    }
-    if (p[0]==='meeting'&&p[1]==='history'&&p.length===3) {
-        const {data} = await q('meeting_history').select('*').eq('date',p[2]);
-        const res={};
-        (data||[]).forEach(r=>{ res[r.driver_uid]={driverName:r.driver_name,driverUid:r.driver_uid,passengers:r.passengers,vehicleType:r.vehicle_type||'carro',realRoute:r.real_route||[],predictedRoute:r.predicted_route||[]}; });
-        return Object.keys(res).length ? res : null;
-    }
     if (p[0]==='meeting'&&p[1]==='history'&&p.length===4) {
         const {data,error} = await q('meeting_history').select('*').eq('date',p[2]).eq('driver_uid',p[3]).single();
         return error ? null : {driverName:data.driver_name,driverUid:data.driver_uid,passengers:data.passengers,vehicleType:data.vehicle_type||'carro',realRoute:data.real_route||[],predictedRoute:data.predicted_route||[]};
@@ -171,16 +156,18 @@ async function _writePath(path, data) {
         res = await q('meeting_config').upsert({key:'activeLocation',value:data});
     else if (p[0]==='meeting'&&p[1]==='participants'&&p.length===3)
         res = await q('meeting_participants').upsert({..._denormPart({uid:p[2],...data}),joined_at:now});
-    else if (p[0]==='meeting'&&p[1]==='notifications'&&p.length===3) {
-        await q('meeting_notifications').delete().eq('vendor_uid',p[2]).eq('handled',false);
-        res = await q('meeting_notifications').insert({vendor_uid:p[2],type:data.type,data,handled:data.handled||false});
+    else if (p[0] === 'meeting' && p[1] === 'notifications' && p.length === 3) {
+        await q('meeting_notifications').insert({ vendor_uid: p[2], type: data.type, handled: data.handled || false, data: data });
+        return;
+    }
+    else if (p[0] === 'meeting' && p[1] === 'history' && p.length === 4) {
+        await q('meeting_history').upsert({ date: p[2], vendor_uid: p[3], data: data, updated_at: new Date().toISOString() });
+        return;
     }
     else if (p[0]==='meeting'&&p[1]==='driverPickups'&&p.length===4)
         res = await q('meeting_driver_pickups').upsert({driver_uid:p[2],passenger_uid:p[3],passenger_name:data.name,status:data.status,sort_order:data.order||0},{onConflict:'driver_uid,passenger_uid'});
     else if (p[0]==='meeting'&&p[1]==='attendance'&&p.length===4)
         res = await q('meeting_attendance').upsert({date:p[2],vendor_uid:p[3],name:data.name,role:data.role,driver_uid:data.driverUid||null,location_id:data.locationId,location_name:data.locationName,region:data.region||'',confirmed_at:now},{onConflict:'date,vendor_uid'});
-    else if (p[0]==='meeting'&&p[1]==='history'&&p.length===4)
-        res = await q('meeting_history').upsert({date:p[2],driver_uid:p[3],driver_name:data.driverName,passengers:data.passengers||null,vehicle_type:data.vehicleType||'carro',real_route:data.realRoute||null,predicted_route:data.predictedRoute||null,started_at:data.startedAt?new Date(data.startedAt).toISOString():null,completed_at:data.completedAt?new Date(data.completedAt).toISOString():now},{onConflict:'date,driver_uid'});
     else if (p[0]==='typing'&&p.length===3) {
         const col = p[2]==='admin' ? {admin_typing:data} : {vendor_typing:data};
         res = await q('typing_status').upsert({vendor_uid:p[1],...col});
@@ -217,8 +204,14 @@ async function _updatePath(path, data) {
         if (data.dropoffStatus!==undefined) u.dropoff_status=data.dropoffStatus;
         res = await q('meeting_driver_pickups').update(u).eq('driver_uid',p[2]).eq('passenger_uid',p[3]);
     }
-    else if (p[0]==='meeting'&&p[1]==='notifications'&&p.length===3)
-        res = await q('meeting_notifications').update({handled:data.handled}).eq('vendor_uid',p[2]).eq('handled',false);
+    else if (p[0] === 'meeting' && p[1] === 'notifications' && p.length === 3) {
+        await q('meeting_notifications').update({ handled: data.handled }).eq('vendor_uid', p[2]);
+        return;
+    }
+    else if (p[0] === 'meeting' && p[1] === 'history' && p.length === 4) {
+        await q('meeting_history').upsert({ date: p[2], vendor_uid: p[3], data: data, updated_at: new Date().toISOString() });
+        return;
+    }
     else if (p[0]==='meeting'&&p[1]==='locations'&&p.length===3)
         res = await q('meeting_locations').update({name:data.name,region:data.region,address:data.address,lat:data.lat,lng:data.lng}).eq('id',p[2]);
     else if (p[0]==='meeting'&&p[1]==='history'&&p.length===4) {
