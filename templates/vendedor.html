@@ -227,6 +227,22 @@
             <!-- BADGE CARONA CHEGANDO -->
             <div id="dashboard-pickup-alert" style="margin-bottom: 24px;"></div>
 
+            <!-- CARD DE CONFIRMAÇÃO DE EMBARQUE NO DASHBOARD -->
+            <div id="passenger-boarding-card" class="meeting-card hidden" style="border: 2px solid var(--gold); background: rgba(191,154,86,0.1); margin: 0 0 24px 0; padding: 20px; border-radius: 20px;">
+                <h3 style="color:var(--gold); display:flex; align-items:center; gap:8px; margin: 0 0 10px 0; font-size: 1.1rem;">
+                    <i data-lucide="bell"></i> O Motorista Chegou!
+                </h3>
+                <p style="font-size:0.88rem; margin:10px 0; color: var(--text);">Você já entrou no veículo?</p>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button class="action-btn" style="flex:1; background:var(--surface2); color:var(--text); padding: 12px; border-radius: 12px;" onclick="passengerRejectBoarding()">
+                        AINDA NÃO
+                    </button>
+                    <button class="action-btn gold" style="flex:2; padding: 12px; border-radius: 12px;" onclick="passengerConfirmBoarding()">
+                        SIM, JÁ EMBARQUEI
+                    </button>
+                </div>
+            </div>
+
             <!-- BADGE REUNIÃO ATIVA -->
             <div id="meeting-alert-card" class="hidden" style="
               background: var(--gold-light); border: 1px solid var(--gold-border);
@@ -387,20 +403,6 @@
                     </div>
                 </div>
 
-                <!-- NOTIFICACAO DE SOLICITACAO DE EMBARQUE -->
-                <div id="passenger-boarding-card" class="meeting-card hidden" style="border: 2px solid var(--gold); background: rgba(191,154,86,0.1); margin-top:20px;">
-                    <h3 style="color:var(--gold); display:flex; align-items:center; gap:8px;">
-                        <i data-lucide="bell"></i> O Motorista Chegou!
-                    </h3>
-                    <p style="font-size:0.88rem; margin:10px 0;">O motorista registrou que está no seu ponto de embarque. Você já entrou no carro?</p>
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="action-btn" style="flex:1; background:var(--surface2); color:var(--text);" onclick="passengerRejectBoarding()">
-                            AINDA NÃO
-                        </button>
-                        <button class="action-btn gold" style="flex:2;" onclick="passengerConfirmBoarding()">
-                            SIM, JÁ EMBARQUEI
-                        </button>
-                    </div>
                 </div>
 
                 <!-- NOTIFICACAO DE RETORNO -->
