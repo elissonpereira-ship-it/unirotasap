@@ -63,6 +63,13 @@
             <div class="menu-item" id="menu-historico" onclick="showScreen('historico')">
                 <i data-lucide="history"></i><span>Meu Histórico</span>
             </div>
+            <div class="menu-item" id="menu-driver-chat" onclick="openDriverSpecificChat()" style="display:none; border: 1px solid rgba(191,154,86,0.3); border-radius: 12px; margin-top: 10px; background: rgba(191,154,86,0.05);">
+                <div class="notif-badge" id="badge-driver-chat-container">
+                    <i data-lucide="message-square" style="color:var(--gold);"></i>
+                    <span id="badge-driver-chat-qty" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--danger);color:white;font-size:0.65rem;font-weight:bold;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;"></span>
+                </div>
+                <span style="color:var(--gold); font-weight:700;">Chat do Motorista</span>
+            </div>
             <hr class="menu-divider">
         </nav>
         <div class="sb-footer">
@@ -217,6 +224,9 @@
                 </div>
             </div>
 
+            <!-- BADGE CARONA CHEGANDO -->
+            <div id="dashboard-pickup-alert" style="margin-bottom: 24px;"></div>
+
             <!-- BADGE REUNIÃO ATIVA -->
             <div id="meeting-alert-card" class="hidden" style="
               background: var(--gold-light); border: 1px solid var(--gold-border);
@@ -260,15 +270,15 @@
                 <div class="meeting-role-card" onclick="selectRole('driver')">
                     <div class="role-icon"><i data-lucide="car"></i></div>
                     <div class="role-info">
-                        <h3>Vou de Motorista</h3>
-                        <p>Posso levar colegas no meu veículo. Gerencie sua rota no aplicativo.</p>
+                        <h3>Sou Motorista</h3>
+                        <p>Levo colegas no meu veículo. Gerencie sua rota e envie o convite de embarque para os caronas.</p>
                     </div>
                 </div>
                 <div class="meeting-role-card" onclick="selectRole('individual')">
                     <div class="role-icon"><i data-lucide="user"></i></div>
                     <div class="role-info">
-                        <h3>Vou Individual (Sozinho ou Carona)</h3>
-                        <p>Aguarde o convite interativo de um motorista ou confirme sua chegada por conta própria.</p>
+                        <h3>Individual</h3>
+                        <p>Vou de ônibus ou outro meio de locomoção. Marque sua presença via GPS no aplicativo ao chegar.</p>
                     </div>
                 </div>
             </div>
@@ -421,7 +431,7 @@
                 </div>
 
                 <div class="meeting-card">
-                    <h3>AGENDA DE EMBARQUE</h3>
+                    <h3>LISTA DE CARONAS</h3>
                     <div id="driver-pickup-list" style="margin-top:10px;"></div>
                 </div>
 
