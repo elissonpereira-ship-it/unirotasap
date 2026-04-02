@@ -101,7 +101,7 @@ function _restoreState(d) {
     _startRouteTracking();
   } else if (d.role === 'passenger') {
     if (!d.driverUid) { showMeetingView('meeting-individual'); }
-    else { showMeetingView('meeting-passenger-active'); _listenDriverInfo(d.driverUid); _renderPassengerStatus(d); }
+    else { currentDriverUid = d.driverUid; showMeetingView('meeting-passenger-active'); _listenDriverInfo(d.driverUid); _renderPassengerStatus(d); }
   } else if (d.role === 'individual') {
     showMeetingView('meeting-individual'); _renderIndividualLocation();
     if (d.presenceConfirmed) _markIndividualConfirmed();
