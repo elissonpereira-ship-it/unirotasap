@@ -28,6 +28,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <!-- Alertas Modernos (SweetAlert2) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .swal2-container { z-index: 99999 !important; }
+        .swal2-popup { background: #0f172a !important; color: #fff !important; border: 1px solid rgba(191, 154, 86, 0.3) !important; border-radius: 20px !important; font-family: 'Poppins', sans-serif !important; }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
 </head>
 
@@ -608,15 +615,26 @@
                     <h3><i data-lucide="route"></i> Revisão de Reuniões — Rotas dos Motoristas</h3>
                 </div>
                 <div class="modal-body" style="padding:16px 0;">
-                    <div style="flex:1;min-width:180px;">
-                        <label
-                            style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Selecionar
-                            Data</label>
-                        <select id="review-date-filter" class="form-input-sm" style="width:100%"></select>
+                    <div style="display:flex; gap:12px; margin-bottom:20px; align-items:flex-end; flex-wrap:wrap; padding: 0 16px;">
+                        <div style="flex:1.2; min-width:200px;">
+                            <label
+                                style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Local
+                                da Reunião</label>
+                            <select id="review-location-filter" class="form-input-sm"
+                                style="width:100%; height:45px; background:#161b22; color:#ffffff; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0 12px; outline:none;"
+                                onchange="loadMeetingReview()"></select>
+                        </div>
+                        <div class="filter-group">
+                        <label>Data da Reunião</label>
+                        <select id="review-date-filter" onchange="loadMeetingReview()"></select>
                     </div>
-                    <button class="btn btn-unigold" onclick="loadMeetingReview()" style="padding:8px 18px;">
-                        <i data-lucide="search"></i> Ver Rotas
+                    
+                    <button class="action-btn-gold" onclick="exportMeetingReviewToExcel()" 
+                            style="margin-top:auto; height:45px; display:flex; align-items:center; gap:8px; background:rgba(191,154,86,0.1); border:1px solid var(--gold-border); color:var(--gold);">
+                        <i data-lucide="file-spreadsheet"></i>
+                        <span>Extrair Planilha</span>
                     </button>
+                </div>
                     <div id="review-list-container" style="max-height:400px;overflow-y:auto;">
                         <p class="empty-msg" style="padding:30px;text-align:center;opacity:0.5;">Selecione uma data para
                             ver
@@ -688,7 +706,7 @@
             <div id="modal-driver-route-detail" class="modal-content glass-panel hidden" style="max-width:850px;">
                 <div class="modal-header-actions">
                     <h3 id="driver-route-modal-title"><i data-lucide="route"></i> Trajeto e Reembolso do Motorista</h3>
-                    <button class="icon-btn-sm close-modal"><i data-lucide="x"></i></button>
+                    <button class="icon-btn-sm" onclick="openMeetingReviewModal()"><i data-lucide="x"></i></button>
                 </div>
                 <div class="modal-body" style="padding:16px; overflow-y:auto; max-height:82vh;">
 
@@ -699,12 +717,15 @@
                             style="padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 16px;">
                             <div
                                 style="font-size:0.75rem;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-                                <i data-lucide="map-pin" style="width:16px;height:16px;"></i> 1. Rota Real Completa (Ida + Volta)
+                                <i data-lucide="map-pin" style="width:16px;height:16px;"></i> 1. Rota Real Completa (Ida
+                                + Volta)
                             </div>
                             <div id="real-route-map-outbound"
                                 style="height:250px;width:100%;border-radius:14px;border:1px solid rgba(16,185,129,0.3);background:#0f172a;">
                             </div>
-                            <div id="real-outbound-km" style="margin-top:10px; font-size:0.85rem; font-weight:700; color:var(--success); text-align:center; background:rgba(16,185,129,0.1); padding:8px; border-radius:10px;">KM IDA: -- km</div>
+                            <div id="real-outbound-km"
+                                style="margin-top:10px; font-size:0.85rem; font-weight:700; color:var(--success); text-align:center; background:rgba(16,185,129,0.1); padding:8px; border-radius:10px;">
+                                KM IDA: -- km</div>
                             <div id="real-outbound-stops" style="margin-top:12px;"></div>
                         </div>
 
@@ -718,7 +739,9 @@
                             <div id="real-route-map-return"
                                 style="height:250px;width:100%;border-radius:14px;border:1px solid rgba(245,158,11,0.3);background:#0f172a;">
                             </div>
-                            <div id="real-return-km" style="margin-top:10px; font-size:0.85rem; font-weight:700; color:var(--warning); text-align:center; background:rgba(245,158,11,0.1); padding:8px; border-radius:10px;">KM VOLTA: -- km</div>
+                            <div id="real-return-km"
+                                style="margin-top:10px; font-size:0.85rem; font-weight:700; color:var(--warning); text-align:center; background:rgba(245,158,11,0.1); padding:8px; border-radius:10px;">
+                                KM VOLTA: -- km</div>
                             <div id="real-return-stops" style="margin-top:12px;"></div>
                         </div>
 
@@ -733,7 +756,8 @@
                             style="padding: 16px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 16px;">
                             <div
                                 style="font-size:0.75rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-                                <i data-lucide="clipboard-list" style="width:16px;height:16px;"></i> 3. Rota Prevista (Cadastro)
+                                <i data-lucide="clipboard-list" style="width:16px;height:16px;"></i> 3. Rota Prevista
+                                (Cadastro)
                             </div>
                             <div id="predicted-route-map"
                                 style="height:280px;width:100%;border-radius:14px;border:1px solid rgba(59,130,246,0.3);background:#0f172a;">
@@ -788,8 +812,10 @@
                     </div>
 
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary close-modal" style="width:100%;">Fechar Auditoria</button>
+                <div class="modal-footer" style="padding: 16px; background: rgba(0,0,0,0.2);">
+                    <button class="btn btn-unigold" onclick="openMeetingReviewModal()" style="width:100%; font-weight:800; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i data-lucide="corner-up-left" style="width:18px;"></i> Fechar e Voltar para Revisão
+                    </button>
                 </div>
             </div>
 
@@ -992,6 +1018,3 @@
 </body>
 
 </html>
-
-
-
