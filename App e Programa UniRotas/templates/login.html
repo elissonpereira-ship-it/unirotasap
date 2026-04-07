@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniRotas - Login</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../src/login.css">
+</head>
+
+<body>
+    <!-- Full Page Background -->
+    <div class="main-background"></div>
+
+    <!-- Floating Logo (Visual Side) -->
+    <img src="../assets/logo_empresa.png" alt="Company Logo" class="floating-brand-logo">
+
+    <main class="login-page-wrapper">
+        <div class="login-container">
+            <div class="login-header">
+                <h1><span class="brand-gold">Uni</span>Rotas</h1>
+                <p>Otimizador Inteligente de Rotas</p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">CPF</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="username" class="form-input" placeholder="Digite seu CPF" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">SENHA</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="lock" class="icon-left"></i>
+                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="toggle-password" id="toggle-password"
+                            aria-label="Mostrar ou esconder senha">
+                            <i data-lucide="eye-off"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-login" class="btn-login">
+                    <span class="btn-text">Entrar no Sistema</span>
+                    <div class="spinner"></div>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer Copyright -->
+    <footer class="login-footer">
+        <p>Copyright © 2024 UniRotas & UniLider. Todos os direitos reservados.<br>
+            Eficiência e Confiança em cada Rota.</p>
+    </footer>
+
+    <!-- MODAL ACESSO RESTRITO -->
+    <div id="modal-error" class="modal-overlay hidden">
+        <div class="modal-content">
+            <i data-lucide="shield-alert" style="color: #ef4444; width: 48px; height: 48px; margin-bottom: 15px;"></i>
+            <h2>Acesso Restrito</h2>
+            <p>Usuário ou senha incorretos. Por favor, verifique suas credenciais.</p>
+            <button onclick="closeErrorModal()" class="btn-error-close">Entendi</button>
+        </div>
+    </div>
+
+    <!-- Supabase SDK + Shim -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase-shim.js"></script>
+
+    <!-- Custom JS -->
+    <script src="../scripts/login.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
