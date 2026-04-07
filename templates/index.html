@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniRotas - Otimizador Inteligente</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Estilos Customizados -->
+    <link rel="stylesheet" href="../src/style.css">
+    <link rel="stylesheet" href="../src/monitoring.css">
+
+    <!-- Parser de Excel e CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Seletor de Data -->
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <!-- Alertas Modernos (SweetAlert2) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .swal2-container { z-index: 99999 !important; }
+        .swal2-popup { background: #0f172a !important; color: #fff !important; border: 1px solid rgba(191, 154, 86, 0.3) !important; border-radius: 20px !important; font-family: 'Poppins', sans-serif !important; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+</head>
+
+<body>
+
+    <!-- TELA DE CARREGAMENTO -->
+
+    <div id="loader-wrapper" class="loader-wrapper">
+        <div class="bubbles">
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+            <div class="bubble"></div>
+        </div>
+        <div class="loader-content">
+            <div class="logo-animation">
+                <img src="../assets/logo_empresa.png" alt="UniRotas Logo" class="loader-logo">
+                <div class="scanning-bar"></div>
+            </div>
+            <h1 class="loader-title"><span class="text-gold">Uni</span><span class="text-white">Rotas</span></h1>
+            <p class="loader-subtitle">Preparando ambiente de roteirização...</p>
+            <div class="loader-bar-container">
+                <div class="loader-bar" id="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Principal -->
+
+    <div id="app-container" class="hidden">
+
+        <!-- Menu Lateral -->
+
+        <nav id="main-sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <img src="../assets/logo_empresa.png" alt="Logo" class="mini-logo">
+                    <span class="brand-text"><span class="text-gold">UNI</span><span
+                            class="text-white">ROTAS</span></span>
+                </div>
+                <button id="close-sidebar" class="icon-btn"><i data-lucide="x"></i></button>
+            </div>
+            <ul class="nav-links">
+                <li data-page="clients"><i data-lucide="users"></i> <span>Clientes (SAP)</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <li data-page="vendors"><i data-lucide="truck"></i> <span>Vendedores</span><i data-lucide="plus-circle"
+                        class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <li data-page="history"><i data-lucide="history"></i> <span>Histórico</span><i data-lucide="plus-circle"
+                        class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <li data-page="dashboard" id="nav-dashboard"><i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span><i data-lucide="plus-circle" class="add-shortcut-btn"
+                        title="Adicionar Atalho"></i>
+                </li>
+                <li data-page="trash" class="nav-trash"><i data-lucide="trash-2"></i> <span>Lixeira</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <li data-action="sync-sap" class="nav-sync"><i data-lucide="refresh-cw"></i> <span>Sincronizar
+                        SAP</span><i data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i>
+                </li>
+                <li data-action="monitor-vendedor"><i data-lucide="eye"></i> <span>Monitorar Vendedor</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <li data-action="analyze-proximity"><i data-lucide="map-pin"></i> <span>Proximidade</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <hr>
+                <!-- Seção de Reuniões -->
+
+                <li data-action="meeting-attendance"><i data-lucide="clipboard-check"></i> <span>Lista de
+                        Presença</span><i data-lucide="plus-circle" class="add-shortcut-btn"
+                        title="Adicionar Atalho"></i></li>
+                <li data-action="registered-sellers"><i data-lucide="users"></i> <span>Vendedores Cadastrados</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <li data-action="meeting-history"><i data-lucide="history"></i> <span>Revisão de Reuniões</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <li data-action="meeting-locations"><i data-lucide="map-pin"></i> <span>Locais de Reunião</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <hr>
+                <li data-action="import"><i data-lucide="file-up"></i> <span>Importar Dados</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+                <li data-action="open-messages" style="position: relative;"><i data-lucide="mail"></i>
+                    <span>Mensagens</span><span id="msg-badge" class="badge hidden"
+                        style="position: absolute; left: 28px; top: 10px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; z-index: 10;">0</span>
+                    <i data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i>
+                </li>
+                <li data-page="settings"><i data-lucide="settings"></i> <span>Configurações</span><i
+                        data-lucide="plus-circle" class="add-shortcut-btn" title="Adicionar Atalho"></i></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="btn-logout" title="Sair do Sistema">
+                    <i data-lucide="log-out"></i> Sair
+                </button>
+                <p>v1.0.0</p>
+
+                <p>&copy; UniRotas Trade Marketing</p>
+            </div>
+        </nav>
+
+        <!-- TOP BAR / HEADER -->
+        <header class="top-bar">
+            <div class="left-section">
+                <button id="hamburger-btn" class="icon-btn menu-trigger"><i data-lucide="menu"></i></button>
+                <h2 class="brand-name"><span>Uni</span>Rotas</h2>
+            </div>
+
+            <div class="brand-center-section">
+                <img src="../assets/logo_empresa.png" alt="UniRotas" class="header-logo">
+            </div>
+
+            <div class="right-section">
+                <button id="profile-btn" class="icon-btn profile-btn"><i data-lucide="user-circle"></i></button>
+            </div>
+        </header>
+
+        <!-- CONTENT AREA -->
+        <main class="content-wrapper">
+            <!-- Container do Mapa -->
+
+            <div id="map-container">
+                <div id="map"></div>
+
+                <!-- Widget de Monitoramento -->
+
+                <div id="monitor-widget" class="floating-widget glass-panel hidden"
+                    style="left: 240px; border-left: 4px solid #BF9A56;">
+                    <div class="widget-header">
+                        <i data-lucide="activity"></i>
+                        <span id="monitor-vendor-name">Monitorando...</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                        <span id="monitor-vendor-km" style="font-size: 1.1rem; font-weight: 700; color: #BF9A56;">0.0
+                            km</span>
+                        <span id="monitor-vendor-status" class="status-badge">Ativo</span>
+                    </div>
+                    <button id="btn-stop-monitor" class="btn btn-danger btn-xs"
+                        style="margin-top: 8px; width: 100%; font-size: 0.6rem; padding: 5px;"
+                        onclick="stopMonitoringVendedor()">
+                        <i data-lucide="user-minus"></i> REMOVER
+                    </button>
+                </div>
+
+                <!-- Widget de Calendário -->
+
+                <div id="calendar-widget" class="floating-widget glass-panel">
+                    <div class="widget-header">
+                        <i data-lucide="calendar"></i>
+                        <span>Data do Roteiro</span>
+                    </div>
+                    <input type="date" id="context-date-picker" class="form-input-sm">
+                    <button id="btn-sync-context" class="btn btn-unigold btn-xs" title="Sincronizar esta data">
+                        <i data-lucide="refresh-cw"></i>
+                    </button>
+                </div>
+
+                <!-- Painel de Ações Interno -->
+
+                <aside id="route-panel" class="glass-panel">
+                    <div class="panel-header">
+                        <h3><i data-lucide="route"></i> Roteiro Ativo</h3>
+                        <button id="minimize-panel" class="icon-btn-sm"><i data-lucide="map"></i></button>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="selection-group">
+                            <label>Vendedor (Origem/Fim)</label>
+                            <div class="searchable-select-container" id="vendor-search-container">
+                                <div class="input-with-icon">
+                                    <i data-lucide="search"></i>
+                                    <input type="text" id="vendor-search-input" class="form-input"
+                                        placeholder="Digite nome ou código do vendedor...">
+                                    <input type="hidden" id="select-vendor"> <!-- Mantido para compatibilidade de ID -->
+                                </div>
+                                <div id="vendor-search-results" class="search-results-dropdown hidden"></div>
+                            </div>
+                        </div>
+
+                        <div class="travel-mode-selection">
+                            <label>Modo de Viagem</label>
+                            <div class="mode-toggle-group">
+                                <button class="mode-btn active" data-mode="DRIVING" title="Carro">
+                                    <i data-lucide="car"></i> <span>Carro</span>
+                                </button>
+                                <button class="mode-btn" data-mode="TWO_WHEELER" title="Moto">
+                                    <i data-lucide="bike"></i> <span>Moto</span>
+                                </button>
+                            </div>
+                            <small class="mode-info-note">* Modo Moto em fase experimental (estimativa
+                                aprimorada)</small>
+                        </div>
+
+                        <div class="waypoints-container">
+                            <label>Clientes na Rota</label>
+                            <div id="waypoints-list" class="sortable-list">
+                                <!-- Clientes serão adicionados aqui -->
+                                <p class="empty-msg">Nenhum cliente selecionado</p>
+                            </div>
+                            <button id="add-waypoint-btn" class="btn btn-outline-primary btn-sm">
+                                <i data-lucide="plus"></i> Adicionar Cliente
+                            </button>
+                        </div>
+
+                        <div class="route-summary hidden" id="route-summary">
+                            <div class="stat-row">
+                                <span class="label">Distância:</span>
+                                <span id="route-dist" class="value">0.0 km</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="label">Tempo Estimado:</span>
+                                <span id="route-time" class="value">0 min</span>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button id="btn-optimize" class="btn btn-unigold w-full">
+                                <i data-lucide="zap"></i>
+                                <span class="btn-text">Otimizar e Calcular</span>
+                                <div class="car-loader">
+                                    <i data-lucide="car"></i>
+                                </div>
+                            </button>
+                            <button id="btn-assign-route" class="btn btn-primary w-full hidden"
+                                style="margin-top: 10px;">
+                                <i data-lucide="send"></i> Enviar Rota ao Celular
+                            </button>
+                            <button id="btn-clear" class="btn btn-secondary w-full">
+                                <i data-lucide="trash-2"></i> Limpar Rota
+                            </button>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Barra de Atalhos -->
+
+                <div id="shortcuts-bar" class="shortcuts-bar hidden">
+                    <!-- Atalhos serão injetados aqui -->
+                </div>
+
+                <!-- Mensagem de Saudação Dinâmica -->
+                <div id="greeting-wrapper" class="greeting-wrapper hidden">
+                    <div class="greeting-content glass-panel">
+                        <i id="greeting-icon" data-lucide="sun"></i>
+                        <span id="greeting-text">Bom dia! Bem-vindo ao UniRotas.</span>
+                    </div>
+                </div>
+
+                <!-- Controles de Zoom Customizados -->
+                <div class="custom-zoom-controls">
+                    <button id="zoom-in" class="glass-panel" title="Aumentar Zoom"><i data-lucide="plus"></i></button>
+                    <button id="zoom-out" class="glass-panel" title="Diminuir Zoom"><i data-lucide="minus"></i></button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Camadas e Modais -->
+
+        <div id="modal-overlay" class="modal-overlay hidden">
+            <!-- Modal Importar -->
+            <div id="modal-import" class="modal-content glass-panel hidden">
+                <h3><i data-lucide="file-up"></i> Importar Dados</h3>
+                <p>Suporta .xlsx, .xls, .csv e .xml</p>
+                <div class="drop-zone" id="drop-zone">
+                    <i data-lucide="upload-cloud"></i>
+                    <p>Arraste arquivos aqui ou clique para selecionar</p>
+                    <input type="file" id="file-input" hidden accept=".xlsx, .xls, .csv, .xml">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Modal de Listagem de Dados -->
+
+            <div id="modal-list" class="modal-content glass-panel hidden">
+                <div class="modal-header-actions">
+                    <h3 id="list-title">Gerenciar Dados</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="input-with-icon" style="margin-bottom: 15px;">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="modal-list-search" class="form-input"
+                            placeholder="Pesquisar por nome ou código...">
+                    </div>
+                    <div id="data-list-container" class="data-list">
+                        <!-- Registros aparecerão aqui -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Fechar</button>
+                </div>
+            </div>
+
+            <!-- Modal de Seleção de Cliente -->
+
+            <div id="modal-select-client" class="modal-content glass-panel hidden">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="user-plus"></i> Selecionar Cliente</h3>
+                    <div class="search-box-modal">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="search-select-client" placeholder="Filtrar por nome ou código...">
+                    </div>
+                </div>
+                <div id="select-client-container" class="data-list select-list">
+                    <!-- Clientes para seleção aparecerão aqui -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Fechar</button>
+                </div>
+            </div>
+            <!-- Modal Análise de Proximidade -->
+            <div id="modal-proximity" class="modal-content glass-panel hidden" style="max-width: 580px; width: 90vw;">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="crown"></i> Análise de Carteira</h3>
+                    <p id="proximity-step-label"
+                        style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">
+                        Passo 1 — Selecione o cliente para análise
+                    </p>
+                </div>
+
+                <!-- â”€â”€ PASSO 1: Seleção de Cliente â”€â”€ -->
+                <div id="proximity-step-1">
+                    <div class="modal-body">
+                        <p class="info-text" style="color: var(--text-secondary); margin-bottom: 10px;">
+                            Selecione um cliente para ver os vendedores mais próximos:
+                        </p>
+                        <div id="proximity-client-list" class="data-list select-list"
+                            style="max-height: 200px; overflow-y: auto; margin-bottom: 20px; border-bottom: 1px solid var(--border);">
+                            <!-- Lista de clientes injetada via JS -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="btn-analyze-proximity" class="btn btn-unigold" style="width: 100%;">
+                            <i data-lucide="zap"></i> Analisar Proximidade
+                        </button>
+                        <button class="btn btn-secondary close-modal">Fechar</button>
+                    </div>
+                </div>
+
+                <!-- â”€â”€ PASSO 2: Resultados / Ranking â”€â”€ -->
+                <div id="proximity-step-2" class="hidden">
+                    <div class="modal-body">
+                        <!-- Banner do cliente selecionado -->
+                        <div id="proximity-selected-banner" style="background:rgba(191,154,86,0.12); border:1px solid #BF9A56;
+                       border-radius:10px; padding:12px 15px; margin-bottom:16px;
+                       display:flex; align-items:center; gap:10px;">
+                            <i data-lucide="building-2"
+                                style="color:#BF9A56; width:22px; height:22px; flex-shrink:0;"></i>
+                            <div>
+                                <strong id="proximity-selected-name" style="font-size:1rem;">—</strong>
+                                <p id="proximity-selected-addr"
+                                    style="font-size:0.78rem; color:var(--text-secondary); margin:0;"></p>
+                            </div>
+                        </div>
+
+                        <!-- Legenda de comparação -->
+                        <p
+                            style="font-size:0.72rem; color:var(--text-secondary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.8px;">
+                            Casa do Vendedor → Cliente → Casa do Vendedor &nbsp;·&nbsp; Top 5 mais próximos
+                        </p>
+
+                        <div id="proximity-results-container" class="data-list"
+                            style="max-height:310px; overflow-y:auto;">
+                            <p class="empty-msg">Calculando...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="btn-proximity-back" class="btn btn-secondary">
+                            <i data-lucide="arrow-left"></i> Voltar
+                        </button>
+                        <button id="btn-proximity-view-map" class="btn btn-unigold">
+                            <i data-lucide="map"></i> Ver no Mapa
+                        </button>
+                        <button class="btn btn-secondary close-modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Modal Lixeira -->
+            <div id="modal-trash" class="modal-content glass-panel hidden">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="trash-2"></i> Lixeira</h3>
+                    <button id="btn-empty-trash" class="btn btn-danger btn-sm">
+                        <i data-lucide="eraser"></i> Esvaziar
+                    </button>
+                </div>
+                <div id="trash-list-container" class="data-list">
+                    <!-- Itens excluídos aparecerão aqui -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Fechar</button>
+                </div>
+            </div>
+
+            <!-- Modal Sincronização SAP -->
+            <div id="modal-sap" class="modal-content glass-panel hidden">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="refresh-cw"></i> Sincronizar com SAP</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="info-text" style="color: var(--text-secondary); margin-bottom: 15px;">Escolha a data
+                        planejada no SAP para importar as rotas automaticamente:</p>
+                    <div class="selection-group" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="input-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Data Planejada:</label>
+                            <input type="date" id="sap-sync-date" class="form-input"
+                                style="width: 100%; font-size: 1rem; padding: 10px;">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Usuário SAP:</label>
+                            <input type="text" id="sap-sync-user" class="form-input" placeholder="Ex: 00001246"
+                                style="width: 100%; font-size: 1rem; padding: 10px;">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Senha SAP:</label>
+                            <input type="password" id="sap-sync-pass" class="form-input" placeholder="Sua senha"
+                                style="width: 100%; font-size: 1rem; padding: 10px;">
+                        </div>
+                    </div>
+                    <div id="sap-sync-status" class="sync-status hidden" style="margin-top: 20px; text-align: center;">
+                        <p class="status-msg" style="color: var(--accent-cyan); font-weight: 500;">
+                            <span class="loading-dots">Sincronizando com SAP</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-do-sync-sap" class="btn btn-unigold w-full">Sincronizar Agora</button>
+                    <button class="btn btn-secondary w-full close-modal">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Modal Dashboard -->
+            <div id="modal-dashboard" class="modal-content glass-panel hidden">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="layout-dashboard"></i> Dashboard Financeiro</h3>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="dash-card">
+                        <span class="dash-label">Total KM (Real)</span>
+                        <span class="dash-value" id="dash-total-km">0.0 km</span>
+                    </div>
+                    <div class="dash-card highlight">
+                        <span class="dash-label">Total Reembolso</span>
+                        <span class="dash-value" id="dash-total-reimbursement">R$ 0,00</span>
+                    </div>
+                    <div class="dash-card">
+                        <span class="dash-label">Visitas</span>
+                        <span class="dash-value" id="dash-total-visits">0</span>
+                    </div>
+                    <div class="dash-card">
+                        <span class="dash-label">Eficiência</span>
+                        <span class="dash-value" id="dash-efficiency">100%</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Fechar</button>
+                </div>
+            </div>
+
+            <!-- Modal Configurações -->
+            <div id="modal-settings" class="modal-content glass-panel hidden">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="settings"></i> Configurações</h3>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label>Estilo do Mapa</label>
+                        <div class="style-options">
+                            <button class="style-btn" data-style="standard" title="Padrão">Standard</button>
+                            <button class="style-btn" data-style="silver" title="Prateado">Silver</button>
+                            <button class="style-btn" data-style="retro" title="Retrô">Retro</button>
+                            <button class="style-btn active" data-style="dark" title="Escuro">Dark</button>
+                            <button class="style-btn" data-style="night" title="Noite">Night</button>
+                            <button class="style-btn" data-style="aubergine" title="Beringela">Aubergine</button>
+                            <button class="style-btn" data-style="satellite" title="Satélite">Satélite</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group" style="margin-top: 20px;">
+                        <label>Interface do Mapa</label>
+                        <div class="setting-item">
+                            <span>Exibir Ícones do Google (POI)</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-poi" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="btn-save-settings">Salvar Preferências</button>
+                    <button class="btn btn-secondary close-modal">Fechar</button>
+                </div>
+            </div>
+
+
+            <!-- Modal de Monitoramento -->
+
+            <div id="modal-select-monitor" class="modal-content glass-panel hidden">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="eye"></i> Monitorar Vendedor</h3>
+                    <p style="font-size: 0.8rem; opacity: 0.7;">Selecione um vendedor ativo para ver sua rota detalhada.
+                    </p>
+                </div>
+                <div id="monitor-selection-list" class="data-list select-list"
+                    style="max-height: 300px; overflow-y: auto; margin-top: 15px;">
+                    <!-- Vendedores ativos aparecerão aqui -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- MODAL LISTA DE PRESENÃ‡A - UNIROTAS -->
+            <div id="modal-meeting-attendance" class="modal-content glass-panel hidden" style="max-width:620px;">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="clipboard-list"></i> Lista de Presença — Reuniões</h3>
+                    <button class="icon-btn-sm close-modal"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body" style="padding: 16px 0;">
+                    <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:flex-end;">
+                        <div style="flex:1; min-width:150px;">
+                            <label
+                                style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Data</label>
+                            <select id="attendance-date-filter" class="form-input-sm" style="width:100%"></select>
+                        </div>
+                        <div style="flex:1; min-width:150px;">
+                            <label
+                                style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Local</label>
+                            <select id="attendance-location-filter" class="form-input-sm" style="width:100%"
+                                onchange="loadAttendanceList()">
+                                <option value="all">Todos os Locais</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-unigold" onclick="loadAttendanceList()" style="padding:8px 18px;">
+                            <i data-lucide="search"></i> Ver Lista
+                        </button>
+                    </div>
+                    <div id="attendance-list-container" style="max-height:380px;overflow-y:auto;">
+                        <p class="empty-msg" style="padding:30px;text-align:center;opacity:0.5;">Carregando...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Fechar</button>
+                </div>
+            </div>
+
+            <!-- MODAL VENDEDORES CADASTRADOS -->
+            <div id="modal-registered-sellers" class="modal-content glass-panel hidden" style="max-width:700px;">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="users"></i> Vendedores Cadastrados</h3>
+                    <button class="icon-btn-sm close-modal"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body" style="padding: 16px 0;">
+                    <div class="input-with-icon" style="margin-bottom:16px;">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="seller-list-search" class="form-input"
+                            placeholder="Buscar por nome ou CPF..." oninput="filterSellersList()">
+                    </div>
+                    <div id="sellers-list-container" style="max-height:450px; overflow-y:auto;">
+                        <p style="text-align:center; opacity:0.5; padding:20px;">Carregando...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Fechar</button>
+                </div>
+            </div>
+
+            <!-- MODAL REVISÃƒO DE REUNIÃ•ES - UNIROTAS -->
+            <div id="modal-meeting-review" class="modal-content glass-panel hidden" style="max-width:680px;">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="route"></i> Revisão de Reuniões — Rotas dos Motoristas</h3>
+                </div>
+                <div class="modal-body" style="padding:16px 0;">
+                    <div style="display:flex; gap:12px; margin-bottom:20px; align-items:flex-end; flex-wrap:wrap; padding: 0 16px;">
+                        <div style="flex:1.2; min-width:200px;">
+                            <label
+                                style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Local
+                                da Reunião</label>
+                            <select id="review-location-filter" class="form-input-sm"
+                                style="width:100%; height:45px; background:#161b22; color:#ffffff; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0 12px; outline:none;"
+                                onchange="loadMeetingReview()"></select>
+                        </div>
+                        <div class="filter-group">
+                        <label>Data da Reunião</label>
+                        <select id="review-date-filter" onchange="loadMeetingReview()"></select>
+                    </div>
+                    
+                    <button class="action-btn-gold" onclick="exportMeetingReviewToExcel()" 
+                            style="margin-top:auto; height:45px; display:flex; align-items:center; gap:8px; background:rgba(191,154,86,0.1); border:1px solid var(--gold-border); color:var(--gold);">
+                        <i data-lucide="file-spreadsheet"></i>
+                        <span>Extrair Planilha</span>
+                    </button>
+                </div>
+                    <div id="review-list-container" style="max-height:400px;overflow-y:auto;">
+                        <p class="empty-msg" style="padding:30px;text-align:center;opacity:0.5;">Selecione uma data para
+                            ver
+                            os trajetos.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Fechar</button>
+                </div>
+            </div>
+
+            <!-- MODAL LOCAIS DE REUNIÃƒO -->
+            <div id="modal-meeting-locations" class="modal-content glass-panel hidden" style="max-width:600px;">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="map-pin"></i> Locais de Reunião</h3>
+                    <button class="icon-btn-sm" onclick="closeAllModals()"><i data-lucide="x"></i></button>
+                </div>
+
+                <div class="modal-body">
+                    <div
+                        style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;">
+                        <div style="font-size:0.72rem;font-weight:700;color:#BF9A56;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;"
+                            id="location-form-title">
+                            Adicionar Local
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                            <input type="text" id="loc-name" placeholder="Nome (Ex: Unilider RJ)" class="glass-input">
+                            <select id="loc-type" class="form-input">
+                                <option value="presencial">Presencial</option>
+                                <option value="remoto">Remoto / Online</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Região / Estado</label>
+                            <select id="loc-region" class="form-input">
+                                <option value="ES">Espírito Santo (ES)</option>
+                                <option value="RJ">Rio de Janeiro (RJ)</option>
+                            </select>
+                        </div>
+                        <input type="text" id="loc-address" placeholder="Endereço Completo" class="glass-input"
+                            style="margin-bottom:12px;">
+                        <div class="input-group" style="margin-bottom:12px;">
+                            <label
+                                style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-bottom:6px;">Coordenadas
+                                (Lat / Lng)</label>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                <input type="number" step="any" id="loc-lat" placeholder="Lat (Ex: -20.12)"
+                                    class="glass-input">
+                                <input type="number" step="any" id="loc-lng" placeholder="Lng (Ex: -40.12)"
+                                    class="glass-input">
+                            </div>
+                        </div>
+                        <input type="hidden" id="editing-location-id">
+                        <button class="btn btn-unigold" style="width:100%;" onclick="saveMeetingLocation()">
+                            <i data-lucide="save"></i> <span id="loc-save-btn-text">Salvar Local</span>
+                        </button>
+                    </div>
+
+                    <div id="locations-list" style="margin-top:20px;">
+                        <!-- Lista de locais cadastrados -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeAllModals()">Fechar</button>
+                </div>
+            </div>
+
+            <!-- Modal Ver Rota de Motorista -->
+            <div id="modal-driver-route-detail" class="modal-content glass-panel hidden" style="max-width:850px;">
+                <div class="modal-header-actions">
+                    <h3 id="driver-route-modal-title"><i data-lucide="route"></i> Trajeto e Reembolso do Motorista</h3>
+                    <button class="icon-btn-sm" onclick="openMeetingReviewModal()"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body" style="padding:16px; overflow-y:auto; max-height:82vh;">
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+
+                        <!-- MAPA 1: IDA REAL -->
+                        <div
+                            style="padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 16px;">
+                            <div
+                                style="font-size:0.75rem;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                                <i data-lucide="map-pin" style="width:16px;height:16px;"></i> 1. Rota Real Completa (Ida
+                                + Volta)
+                            </div>
+                            <div id="real-route-map-outbound"
+                                style="height:250px;width:100%;border-radius:14px;border:1px solid rgba(16,185,129,0.3);background:#0f172a;">
+                            </div>
+                            <div id="real-outbound-km"
+                                style="margin-top:10px; font-size:0.85rem; font-weight:700; color:var(--success); text-align:center; background:rgba(16,185,129,0.1); padding:8px; border-radius:10px;">
+                                KM IDA: -- km</div>
+                            <div id="real-outbound-stops" style="margin-top:12px;"></div>
+                        </div>
+
+                        <!-- MAPA 2: VOLTA REAL -->
+                        <div
+                            style="padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 16px;">
+                            <div
+                                style="font-size:0.75rem;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                                <i data-lucide="home" style="width:16px;height:16px;"></i> 2. Detalhe do Retorno
+                            </div>
+                            <div id="real-route-map-return"
+                                style="height:250px;width:100%;border-radius:14px;border:1px solid rgba(245,158,11,0.3);background:#0f172a;">
+                            </div>
+                            <div id="real-return-km"
+                                style="margin-top:10px; font-size:0.85rem; font-weight:700; color:var(--warning); text-align:center; background:rgba(245,158,11,0.1); padding:8px; border-radius:10px;">
+                                KM VOLTA: -- km</div>
+                            <div id="real-return-stops" style="margin-top:12px;"></div>
+                        </div>
+
+                    </div>
+
+                    <div style="height:1px;background:rgba(255,255,255,0.06);margin-bottom:22px;"></div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+                        <!-- MAPA 3: PREVISTO (COMPLETO) -->
+                        <div
+                            style="padding: 16px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 16px;">
+                            <div
+                                style="font-size:0.75rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                                <i data-lucide="clipboard-list" style="width:16px;height:16px;"></i> 3. Rota Prevista
+                                (Cadastro)
+                            </div>
+                            <div id="predicted-route-map"
+                                style="height:280px;width:100%;border-radius:14px;border:1px solid rgba(59,130,246,0.3);background:#0f172a;">
+                            </div>
+                            <div id="pred-route-stops" style="margin-top:12px;"></div>
+                        </div>
+
+                        <!-- CÁLCULOS E AUDITORIA -->
+                        <div
+                            style="padding: 16px; background: rgba(191,154,86,0.05); border: 2px solid rgba(191,154,86,0.3); border-radius: 16px; height:100%;">
+                            <h4
+                                style="color:var(--gold); margin-bottom:16px; font-size:1.1rem; border-bottom:1px solid rgba(191,154,86,0.2); padding-bottom:8px;">
+                                Resumo da Viagem
+                            </h4>
+
+                            <div id="real-vehicle-info"
+                                style="margin-bottom:12px; font-weight:700; font-size:0.9rem; color:var(--text);"></div>
+                            <div id="real-passengers-info"
+                                style="margin-bottom:20px; font-size:0.85rem; color:var(--muted); line-height:1.5;">
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                                <div
+                                    style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center;">
+                                    <div
+                                        style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;">
+                                        Total KM Real (Ida+Volta)</div>
+                                    <div id="real-km-val"
+                                        style="font-size:1.2rem;font-weight:800;color:var(--success);">-- km</div>
+                                    <div
+                                        style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-top:10px;">
+                                        Pagamento Faturado</div>
+                                    <div id="real-pay-val" style="font-size:1.4rem;font-weight:900;color:var(--gold);">
+                                        R$ --</div>
+                                </div>
+                                <div
+                                    style="background:var(--surface); border:1px dashed var(--border); border-radius:12px; padding:12px; text-align:center;">
+                                    <div
+                                        style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;">
+                                        KM Previsto Calculado</div>
+                                    <div id="pred-km-val" style="font-size:1.2rem;font-weight:800;color:#3b82f6;">-- km
+                                    </div>
+                                    <div
+                                        style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-top:10px;">
+                                        Custo Desenhado</div>
+                                    <div id="pred-pay-val" style="font-size:1.4rem;font-weight:900;color:var(--muted);">
+                                        R$ --</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="modal-footer" style="padding: 16px; background: rgba(0,0,0,0.2);">
+                    <button class="btn btn-unigold" onclick="openMeetingReviewModal()" style="width:100%; font-weight:800; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i data-lucide="corner-up-left" style="width:18px;"></i> Fechar e Voltar para Revisão
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Cadastro de Cliente e Vendedor -->
+
+            <div id="modal-form" class="modal-content glass-panel hidden">
+                <h3 id="form-title">Cadastrar Dados</h3>
+                <form id="data-form">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>ID SAP / Código</label>
+                            <input type="text" name="code" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Nome / Razão Social (Apenas Letras)</label>
+                            <input type="text" name="name" required
+                                oninput="this.value = this.value.replace(/[^a-zA-ZáàâãéèêíïóôõöúçñÀÁÂÃÈÉÊÌÍÏÒÓÔÕÖÙÚÇÑ ]/g, '')">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Endereço Completo</label>
+                        <input type="text" id="address-input" name="address" placeholder="Rua, número, cidade..."
+                            required>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Bairro</label>
+                            <input type="text" name="bairro">
+                        </div>
+                        <div class="input-group">
+                            <label>CEP</label>
+                            <input type="text" name="cep">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal Confirmação -->
+
+            <div id="modal-confirm" class="modal-content glass-panel hidden"
+                style="max-width: 380px; padding: 40px 30px; text-align: center;">
+                <div class="confirm-icon" style="margin-bottom: 25px;">
+                    <i data-lucide="help-circle"
+                        style="width: 50px; height: 50px; color: white; opacity: 0.9; display: inline-block;"></i>
+                </div>
+                <h3 id="confirm-title"
+                    style="margin-bottom: 15px; color: #BF9A56; font-size: 1.4rem; display: block; width: 100%; text-align: center;">
+                    Confirmação</h3>
+                <p id="confirm-message"
+                    style="color: var(--text-secondary); margin-bottom: 35px; line-height: 1.6; font-size: 0.95rem; display: block; width: 100%; text-align: center;">
+                </p>
+                <div class="modal-footer"
+                    style="justify-content: center; gap: 15px; margin-top: 0; padding: 0; background: transparent; border: none;">
+                    <button id="btn-confirm-yes" class="btn btn-primary"
+                        style="min-width: 130px; padding: 12px; border-radius: 10px;">Confirmar</button>
+                    <button id="btn-confirm-no" class="btn btn-secondary close-modal"
+                        style="min-width: 130px; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border);">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Modal Seleção de Vendedor -->
+            <div id="modal-select-vendor-assign" class="modal-content glass-panel hidden" style="max-width: 450px;">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="send"></i> Selecionar Vendedor</h3>
+                </div>
+                <div id="vendor-assign-list" class="data-list"
+                    style="max-height: 300px; overflow-y: auto; padding: 10px;">
+                    <!-- Lista de vendedores online aqui -->
+                </div>
+            </div>
+
+
+            <!-- MODAL EDITAR VENDEDOR -->
+            <div id="modal-edit-seller" class="modal-content glass-panel hidden" style="max-width:500px">
+                <div class="modal-header-actions">
+                    <h3><i data-lucide="user-cog"></i> Editar Vendedor</h3>
+                    <button class="icon-btn-sm close-modal"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body" style="padding:16px 0">
+                    <input type="hidden" id="edit-seller-uid">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Nome Completo (Apenas Letras)</label>
+                            <input type="text" id="edit-seller-name" class="form-input" placeholder="Nome completo"
+                                oninput="this.value = this.value.replace(/[^a-zA-ZáàâãéèêíïóôõöúçñÀÁÂÃÈÉÊÌÍÏÒÓÔÕÖÙÚÇÑ ]/g, '')">
+                        </div>
+                        <div class="input-group">
+                            <label>C. Custo</label>
+                            <input type="text" id="edit-seller-cc" class="form-input" placeholder="Ex: 1234.56">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>E-mail</label>
+                        <input type="email" id="edit-seller-email" class="form-input" placeholder="email@exemplo.com">
+                    </div>
+                    <div class="input-group">
+                        <label>CPF</label>
+                        <input type="text" id="edit-seller-cpf" class="form-input" placeholder="000.000.000-00"
+                            maxlength="14">
+                    </div>
+                    <div class="input-group">
+                        <label>Endereço</label>
+                        <input type="text" id="edit-seller-address" class="form-input"
+                            placeholder="Rua, número, bairro...">
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Cidade</label>
+                            <input type="text" id="edit-seller-city" class="form-input" placeholder="Cidade">
+                        </div>
+                        <div class="input-group">
+                            <label>CEP</label>
+                            <input type="text" id="edit-seller-cep" class="form-input" placeholder="00000-000"
+                                maxlength="9">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal">Cancelar</button>
+                    <button class="btn btn-unigold" onclick="saveEditSeller()">
+                        <i data-lucide="save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
+
+            <!-- GOOGLE MAPS API -->
+            <script
+                src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAO46S-g-tbXDg9aljUNajplLQV_3i7c9Q&libraries=places&callback=initApp"
+                async defer></script>
+
+            <!-- Supabase SDK + Shim -->
+            <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+            <script src="../scripts/supabase-shim-v2.js"></script>
+
+            <!-- Custom JS -->
+            <script src="../scripts/script.js"></script>
+
+
+            <!-- MODAL MENSAGENS / INBOX -->
+            <div id="modal-messages" class="modal-content glass-panel hidden" style="max-width:750px">
+                <div class="modal-header">
+                    <h3><i data-lucide="mail"></i> Caixa de Mensagens</h3>
+                    <button class="close-btn" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div id="inbox-container" style="display: flex; height: 450px;">
+                    <div id="inbox-list"
+                        style="width: 220px; border-right: 1px solid var(--border); overflow-y: auto; background: rgba(255,255,255,0.02);">
+                        <p class="empty-msg" style="padding: 20px;">Carregando...</p>
+                    </div>
+                    <div id="inbox-chat"
+                        style="flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.2);">
+                        <div id="inbox-chat-messages"
+                            style="flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px;">
+                            <p class="empty-msg" style="margin-top: 150px; text-align: center; opacity: 0.5;">Selecione
+                                um
+                                vendedor para conversar</p>
+                        </div>
+                        <div id="typing-indicator" class="typing-indicator"
+                            style="display:none; padding:10px 15px; font-size:0.75rem; color:var(--accent-cyan); font-style:italic;">
+                            <span></span><span></span><span></span> Digitando...
+                        </div>
+                        <div id="inbox-chat-input-container" class="hidden"
+                            style="padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: #1e293b;">
+                            <input type="text" id="inbox-chat-input" placeholder="Escreva uma resposta..."
+                                style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 20px; padding: 10px 15px; color: white; outline: none;">
+                            <button id="btn-send-reply" class="btn btn-primary"
+                                style="border-radius: 20px; padding: 0 20px;">Enviar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- MODAL LOGOUT -->
+            <div id="modal-logout" class="modal-content glass-panel hidden"
+                style="max-width: 400px; text-align: center;">
+                <div class="modal-header"
+                    style="justify-content: center; padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <h3
+                        style="display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; margin: 0; color: white; font-size: 1.3rem;">
+                        <i data-lucide="log-out" style="width: 24px; height: 24px;"></i> Encerrar Sessão
+                    </h3>
+                </div>
+                <div class="modal-body" style="padding: 30px;">
+                    <p style="margin-bottom: 25px; color: var(--text-secondary);">Deseja realmente sair do sistema
+                        UniRotas?</p>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button onclick="closeAllModals()" class="btn"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 10px 25px; border-radius: 10px;">Cancelar</button>
+                        <button onclick="confirmLogout()" class="btn"
+                            style="background: #ef4444; color: white; padding: 10px 25px; border-radius: 10px; border: none; font-weight: 600;">Sair</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notification-container" class="notification-container"></div>
+</body>
+
+</html>
