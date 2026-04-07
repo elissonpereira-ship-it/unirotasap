@@ -5,13 +5,13 @@
     const _SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqY29ud2Fya2V1bnBpeHFuZ25xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTQ2MDksImV4cCI6MjA5MDQ3MDYwOX0.HFHmApPMYKT_GZLJwDAY8IZSaM38CjVUN1amAah4wZM';
 
     if (!window.supabase || !window.supabase.createClient) return;
-    
+
     // O cliente REAL do Supabase
     const _sb = window.supabase.createClient(_SUPA_URL, _SUPA_KEY);
-    
+
     // Exposição global limpa
-    window.sb = _sb; 
-    window._supabase = _sb; 
+    window.sb = _sb;
+    window._supabase = _sb;
     window._supabaseClient = _sb;
 
     // Helpers de Mapeamento (para facilitar a vida do script.js e vendedor.js)
