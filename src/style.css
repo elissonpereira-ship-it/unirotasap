@@ -2532,8 +2532,13 @@ input:focus+.slider {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .empty-msg {
@@ -2549,13 +2554,16 @@ input:focus+.slider {
 .glass-panel::-webkit-scrollbar {
     width: 6px;
 }
+
 .glass-panel::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .glass-panel::-webkit-scrollbar-thumb {
     background: rgba(191, 154, 86, 0.2);
     border-radius: 10px;
 }
+
 .glass-panel::-webkit-scrollbar-thumb:hover {
     background: rgba(191, 154, 86, 0.4);
 }
