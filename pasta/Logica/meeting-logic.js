@@ -251,18 +251,24 @@ async function m_syncGpsLoop() {
                 .select('uid, lat, lon, lastActive')
                 .in('uid', uids);
 
+            console.log("📡 GPS Sync - Dados recebidos do banco:", data);
+
             if (data) {
                 data.forEach(v => {
                     const p = m_state.paxSelected.find(x => x.uid === v.uid);
                     if (p) {
                         p.lat = v.lat; p.lng = v.lon;
-                        p.isOnline = (v.lastActive && (now - new Date(v.lastActive).getTime() < GPS_TIMEOUT_MS));
+                        const diff = v.lastActive ? (now - new Date(v.lastActive).getTime()) : Infinity;
+                        console.log(`🔍 Checando ${p.name}: Atraso de ${diff}ms (Limite: ${GPS_TIMEOUT_MS}ms)`);
+                        p.isOnline = (v.lastActive && (diff < GPS_TIMEOUT_MS));
                     }
                 });
             }
         }
         m_renderOutboundList();
-    } catch (e) { console.error("Erro no GPS sync:", e); }
+    } catch (e) { 
+        console.error("🚨 Erro no GPS sync:", e); 
+    }
 }
 
 function m_renderOutboundList() {
