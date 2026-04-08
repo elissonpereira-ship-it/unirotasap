@@ -245,40 +245,47 @@ async function m_syncGpsLoop() {
     const now = Date.now();
     try {
         const uids = m_state.paxSelected.map(p => p.uid);
-        if (uids.length > 0) {
-            const { data, error } = await window.supabase
-                .from('vendedores')
-                .select('*') // Busca todas as colunas para evitar erro de nome (lat vs latitude, etc)
-                .in('uid', uids);
+        if (uids.length === 0) return;
 
-            if (error) {
-                console.error("❌ [Radar] Erro ao buscar vendedores:", error.message);
-                return;
-            }
+        // USA SELECT(*) PARA EVITAR ERRO 400 SE ALGUMA COLUNA ESPECÍFICA NÃO EXISTIR
+        const { data, error } = await window.supabase
+            .from('vendedores')
+            .select('*')
+            .in('uid', uids);
 
-            console.log("📡 GPS Sync - Dados reais do banco:", data);
-
-            if (data) {
-                data.forEach(v => {
-                    const p = m_state.paxSelected.find(x => x.uid === v.uid);
-                    if (p) {
-                        // Mapeamento dinâmico de colunas (aceita lat ou latitude, lon ou longitude)
-                        p.lat = v.lat || v.latitude || p.lat;
-                        p.lng = v.lon || v.longitude || v.lng || p.lng;
-
-                        // Busca o timestamp de atividade (aceita lastActive ou last_active)
-                        const rawTs = v.lastActive || v.last_active || v.updated_at;
-                        const diff = rawTs ? (now - new Date(rawTs).getTime()) : Infinity;
-
-                        console.log(`🔍 Status ${p.name}: Atraso de ${diff}ms (Limite: ${GPS_TIMEOUT_MS}ms)`);
-                        p.isOnline = (rawTs && (diff < GPS_TIMEOUT_MS));
-                    }
-                });
-            }
+        if (error) {
+            console.error("❌ [GPS RADAR] Erro Supabase:", error.message);
+            return;
         }
+
+        console.log("📡 GPS RADAR - Dados do Banco:", data);
+
+        if (data && data.length > 0) {
+            data.forEach(v => {
+                const p = m_state.paxSelected.find(x => x.uid === v.uid);
+                if (p) {
+                    // Tenta encontrar as coordenadas em qualquer nome de coluna comum
+                    p.lat = v.lat || v.latitude || v.lat_coord || p.lat;
+                    p.lng = v.lon || v.longitude || v.lng_coord || v.lng || p.lng;
+                    
+                    // Tenta encontrar o tempo de atividade
+                    const ts = v.lastActive || v.last_active || v.updated_at || v.last_sync;
+                    if (ts) {
+                        const diff = now - new Date(ts).getTime();
+                        p.isOnline = (diff < GPS_TIMEOUT_MS);
+                        console.log(`🔍 Radar: ${p.name} está ${p.isOnline ? 'ONLINE' : 'OFFLINE'} (atraso: ${Math.round(diff/1000)}s)`);
+                    } else {
+                        p.isOnline = false;
+                        console.log(`⚠️ Radar: ${p.name} não possui timestamp de atividade.`);
+                    }
+                }
+            });
+        }
+        
         m_renderOutboundList();
+        
     } catch (e) {
-        console.error("🚨 Erro no GPS sync:", e);
+        console.error("🚨 [GPS RADAR] Falha crítica:", e);
     }
 }
 
