@@ -1773,7 +1773,7 @@ window.m_generateBestReturnRoute = async function () {
         const allUids = [myUid, ...selectedUids];
         const { data: users, error } = await window.supabase
             .from('usuarios')
-            .select('uid, endereco, nome')
+            .select('uid, address, nome')
             .in('uid', allUids);
 
         if (error) throw error;
@@ -1785,11 +1785,11 @@ window.m_generateBestReturnRoute = async function () {
         // Início: Local da reunião
         const origin = m_state.location?.address || m_state.location?.name || "Local atual";
         // Fim: Endereço do motorista
-        const destination = driverInfo?.endereco || "Minha Casa";
+        const destination = driverInfo?.address || "Minha Casa";
 
         // Waypoints: Endereços dos caronas marcados (que tenham endereço preenchido)
         const waypoints = paxesInfoArr
-            .map(p => p.endereco)
+            .map(p => p.address)
             .filter(addr => addr && addr.trim() !== '')
             .join('|');
 
