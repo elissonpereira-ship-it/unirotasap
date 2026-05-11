@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UNILIDER Rotas | App Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+</head>
+
+<body data-app-entry="mobile">
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <section id="login-screen" class="login-screen">
+    <div class="login-visual">
+      <div class="brand-card">
+        <img src="assets/logo_empresa.png" alt="UNILIDER" class="brand-logo">
+        <div>
+          <span class="eyebrow">Novo produto</span>
+          <h1>UNILIDER Rotas</h1>
+          <p>Gestão de viagens, caronas, presença e reembolso por quilometragem.</p>
+        </div>
+      </div>
+      <div class="logic-strip">
+        <div><strong>R$ 0,90/km</strong><span>Carro</span></div>
+        <div><strong>R$ 0,40/km</strong><span>Moto</span></div>
+        <div><strong>Geofence</strong><span>Presença no local</span></div>
+      </div>
+    </div>
+
+    <div class="login-panel">
+      <div class="login-tabs" role="tablist" aria-label="Tipo de acesso">
+        <button class="login-tab" data-login-tab="manager" type="button">Gestor</button>
+        <button class="login-tab active" data-login-tab="mobile" type="button">Vendedor</button>
+      </div>
+
+      <form id="manager-login-form" class="access-form hidden">
+        <h2>Painel gestor</h2>
+        <p class="form-note">Login unico do gestor pelo Supabase Auth.</p>
+        <label>
+          Usuario ou e-mail
+          <input id="manager-user" autocomplete="username" placeholder="admin@unirotas.com.br">
+        </label>
+        <label>
+          Senha
+          <input id="manager-pass" type="password" autocomplete="current-password" placeholder="Senha do gestor">
+        </label>
+        <button class="primary-action" type="submit">
+          <i data-lucide="log-in"></i>
+          Entrar no painel
+        </button>
+        <button class="ghost-action" id="open-mobile-demo" type="button">
+          <i data-lucide="smartphone"></i>
+          Abrir app mobile
+        </button>
+      </form>
+
+      <form id="mobile-login-form" class="access-form">
+        <h2>Aplicativo mobile</h2>
+        <p class="form-note">Entre, cadastre-se ou acompanhe sua aprovacao.</p>
+        <label>
+          E-mail
+          <input id="mobile-email" autocomplete="email" placeholder="vendedor@empresa.com.br">
+        </label>
+        <label>
+          Senha
+          <input id="mobile-pass" type="password" autocomplete="current-password" placeholder="Sua senha">
+        </label>
+        <button class="primary-action" type="submit">
+          <i data-lucide="navigation"></i>
+          Entrar no app
+        </button>
+        <button class="ghost-action" id="show-register" type="button">
+          <i data-lucide="user-plus"></i>
+          Criar cadastro
+        </button>
+        <button class="text-action" id="recover-password" type="button">Recuperar senha</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="loading-screen" class="loading-screen hidden">
+    <img src="assets/logo_empresa.png" alt="UNILIDER">
+    <div class="loader-ring"></div>
+    <p id="loading-copy">Carregando rotas e permissoes...</p>
+  </section>
+
+  <section id="manager-app" class="manager-app hidden">
+    <aside class="manager-sidebar">
+      <div class="side-brand">
+        <img src="assets/logo_empresa.png" alt="UNILIDER">
+        <div>
+          <strong>UNILIDER</strong>
+          <span>Central de rotas</span>
+        </div>
+      </div>
+      <nav class="side-nav" aria-label="Navegacao gestor">
+        <button class="side-link active" data-panel="overview"><i data-lucide="layout-dashboard"></i><span>Resumo</span></button>
+        <button class="side-link" data-panel="routes"><i data-lucide="route"></i><span>Rotas</span></button>
+        <button class="side-link" data-panel="sellers"><i data-lucide="users"></i><span>Vendedores</span></button>
+        <button class="side-link" data-panel="approvals"><i data-lucide="user-check"></i><span>Aprovacoes</span></button>
+        <button class="side-link" data-panel="meetings"><i data-lucide="map-pin"></i><span>Reunioes</span></button>
+        <button class="side-link" data-panel="presence"><i data-lucide="clipboard-check"></i><span>Presenca</span></button>
+        <button class="side-link" data-panel="messages"><i data-lucide="messages-square"></i><span>Mensagens</span></button>
+        <button class="side-link" data-panel="feedback"><i data-lucide="message-square-quote"></i><span>Feedbacks</span></button>
+      </nav>
+      <button id="manager-logout" class="side-logout"><i data-lucide="log-out"></i><span>Sair</span></button>
+    </aside>
+
+    <main class="manager-main">
+      <header class="manager-topbar">
+        <div>
+          <span class="eyebrow">Operacao ao vivo</span>
+          <h2 id="manager-title">Resumo</h2>
+        </div>
+        <div class="topbar-actions">
+          <button id="sync-supabase" class="soft-button"><i data-lucide="cloud"></i> Sincronizar</button>
+          <button id="open-mobile-from-manager" class="soft-button"><i data-lucide="smartphone"></i> App mobile</button>
+        </div>
+      </header>
+
+      <section class="panel active" data-panel-view="overview">
+        <div class="metric-grid" id="metric-grid"></div>
+        <div class="two-column">
+          <article class="surface">
+            <div class="section-head">
+              <div>
+                <span class="eyebrow">Hoje</span>
+                <h3>Rotas que precisam de atencao</h3>
+              </div>
+              <button class="icon-button" data-panel-jump="routes" title="Ver rotas"><i data-lucide="arrow-right"></i></button>
+            </div>
+            <div id="attention-routes" class="compact-list"></div>
+          </article>
+          <article class="surface">
+            <div class="section-head">
+              <div>
+                <span class="eyebrow">Decisao rapida</span>
+                <h3>Cadastros pendentes</h3>
+              </div>
+              <button class="icon-button" data-panel-jump="approvals" title="Ver aprovacoes"><i data-lucide="arrow-right"></i></button>
+            </div>
+            <div id="pending-overview" class="compact-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" data-panel-view="routes">
+        <div class="surface">
+          <div class="section-head wrap">
+            <div>
+              <span class="eyebrow">Auditoria</span>
+              <h3>Rotas dos motoristas</h3>
+            </div>
+            <div class="filter-row">
+              <select id="route-location-filter" class="input-compact" aria-label="Filtrar por reuniao"></select>
+              <select id="route-status-filter" class="input-compact" aria-label="Filtrar por status">
+                <option value="all">Todos os status</option>
+                <option value="active">Em andamento</option>
+                <option value="completed">Concluidas</option>
+                <option value="issue">Com ocorrencia</option>
+                <option value="cancelled">Canceladas</option>
+              </select>
+              <button id="export-routes" class="soft-button"><i data-lucide="download"></i> Extrair</button>
+            </div>
+          </div>
+          <div id="routes-list" class="route-list"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel-view="sellers">
+        <div class="surface">
+          <div class="section-head wrap">
+            <div>
+              <span class="eyebrow">Equipe</span>
+              <h3>Vendedores cadastrados</h3>
+            </div>
+            <button id="create-seller" class="primary-small"><i data-lucide="user-plus"></i> Novo vendedor</button>
+          </div>
+          <div id="sellers-table" class="data-table"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel-view="approvals">
+        <div class="surface">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">Controle de acesso</span>
+              <h3>Aprovacao de cadastro</h3>
+            </div>
+          </div>
+          <div id="approval-list" class="approval-grid"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel-view="meetings">
+        <div class="surface">
+          <div class="section-head wrap">
+            <div>
+              <span class="eyebrow">Locais oficiais</span>
+              <h3>Locais de reuniao</h3>
+            </div>
+            <button id="create-meeting" class="primary-small"><i data-lucide="map-pin-plus"></i> Cadastrar local</button>
+          </div>
+          <div id="meeting-list" class="meeting-grid"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel-view="presence">
+        <div class="surface">
+          <div class="section-head wrap">
+            <div>
+              <span class="eyebrow">GPS + carona</span>
+              <h3>Lista de presenca</h3>
+            </div>
+            <select id="presence-filter" class="input-compact" aria-label="Filtrar presenca"></select>
+          </div>
+          <div id="presence-list" class="data-table"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel-view="messages">
+        <div class="messages-layout">
+          <article class="surface">
+            <div class="section-head">
+              <div>
+                <span class="eyebrow">Comunicacao</span>
+                <h3>Vendedores</h3>
+              </div>
+            </div>
+            <div id="message-contacts" class="contact-list"></div>
+          </article>
+          <article class="surface">
+            <div class="section-head">
+              <div>
+                <span class="eyebrow">Canal temporario</span>
+                <h3 id="message-title">Selecione um vendedor</h3>
+              </div>
+            </div>
+            <div id="message-thread" class="message-thread"></div>
+            <div class="message-compose">
+              <input id="message-input" placeholder="Escreva uma mensagem ao vendedor">
+              <button id="send-message" class="icon-button"><i data-lucide="send"></i></button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" data-panel-view="feedback">
+        <div class="surface">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">Melhorias</span>
+              <h3>Feedback dos vendedores</h3>
+            </div>
+          </div>
+          <div id="feedback-list" class="feedback-list"></div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <section id="mobile-app" class="mobile-stage hidden">
+    <button id="back-to-manager" class="floating-back hidden"><i data-lucide="monitor"></i> Voltar ao painel</button>
+    <div class="phone-frame">
+      <div class="phone-status">
+        <span>9:41</span>
+        <span><i data-lucide="signal"></i><i data-lucide="wifi"></i><strong>100</strong></span>
+      </div>
+
+      <aside id="mobile-sidebar" class="mobile-sidebar">
+        <div class="side-brand">
+          <img src="assets/logo_empresa.png" alt="UNILIDER">
+          <div><strong id="mobile-side-name">Vendedor</strong><span id="mobile-side-cost">Centro de custo</span></div>
+        </div>
+        <button data-mobile-panel="profile"><i data-lucide="user-round"></i> Editar perfil</button>
+        <button data-mobile-panel="history"><i data-lucide="history"></i> Historico de trajetos</button>
+        <button id="toggle-theme"><i data-lucide="moon"></i> Tema escuro</button>
+        <button data-mobile-panel="support"><i data-lucide="headphones"></i> Suporte</button>
+        <button data-mobile-panel="feedback"><i data-lucide="message-square"></i> Dar feedback</button>
+        <button id="mobile-logout"><i data-lucide="log-out"></i> Sair</button>
+      </aside>
+      <div id="mobile-scrim" class="mobile-scrim"></div>
+
+      <main class="mobile-screen">
+        <div id="mobile-map" class="mobile-map">
+          <div class="map-fallback">
+            <div class="fake-water"></div>
+            <div class="fake-road main"></div>
+            <div class="fake-road side"></div>
+            <div class="fake-route"></div>
+            <div class="fake-car"><i data-lucide="car-front"></i></div>
+            <span class="map-poi park">Parque das Aguas</span>
+            <span class="map-poi gym">Academia Live Fit</span>
+          </div>
+        </div>
+
+        <header class="mobile-map-top">
+          <button id="open-sidebar" class="round-button"><i data-lucide="menu"></i></button>
+          <div class="search-pill">
+            <i data-lucide="search"></i>
+            <input id="mobile-search" placeholder="Inserir local" aria-label="Inserir local">
+          </div>
+          <button class="round-button has-dot" id="mobile-notifications" data-mobile-panel="notifications"><i data-lucide="bell"></i></button>
+        </header>
+
+        <div class="mobile-actions">
+          <button id="mobile-add-passenger"><i data-lucide="user-round-plus"></i><span>Adicionar<br>Caronas</span></button>
+          <button id="mobile-emergency"><i data-lucide="triangle-alert"></i><span>Emergencia</span></button>
+          <button id="mobile-select-meeting"><i data-lucide="map-pin"></i><span>Inserir<br>Local</span></button>
+          <button id="mobile-return"><i data-lucide="rotate-ccw"></i><span>Iniciar<br>Retorno</span></button>
+        </div>
+
+        <button id="mobile-locate" class="round-button map-tool locate"><i data-lucide="crosshair"></i></button>
+        <button id="mobile-layers" class="round-button map-tool layers"><i data-lucide="layers"></i></button>
+
+        <section id="approval-waiting" class="mobile-modal-card hidden">
+          <i data-lucide="clock-3"></i>
+          <h3>Cadastro em aprovacao</h3>
+          <p>Seu acesso foi enviado ao gestor. Assim que aprovado, o app libera reunioes e historico.</p>
+          <button class="primary-small" id="simulate-approval">Simular aprovacao</button>
+        </section>
+
+        <section class="bottom-sheet" id="mobile-bottom-sheet">
+          <button class="sheet-handle" id="sheet-handle" type="button" aria-label="Recolher painel inferior" aria-expanded="true"></button>
+          <div id="mobile-home-panel"></div>
+
+          <div id="mobile-panel-content" class="mobile-panel-content hidden"></div>
+        </section>
+
+        <nav class="mobile-bottom-nav">
+          <button class="active" data-mobile-panel="home"><i data-lucide="home"></i><span>Inicio</span></button>
+          <button data-mobile-panel="meetings"><i data-lucide="calendar-days"></i><span>Reuniao</span></button>
+          <button data-mobile-panel="chat"><i data-lucide="message-square"></i><span>Mensagens</span></button>
+          <button data-mobile-panel="safety"><i data-lucide="shield"></i><span>Seguranca</span></button>
+          <button data-mobile-panel="profile"><i data-lucide="user"></i><span>Perfil</span></button>
+        </nav>
+      </main>
+    </div>
+  </section>
+
+  <div id="modal-root" class="modal-root hidden" role="dialog" aria-modal="true">
+    <div class="modal-card" id="modal-card"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAO46S-g-tbXDg9aljUNajplLQV_3i7c9Q&libraries=places,geometry&loading=async"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
